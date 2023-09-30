@@ -1,0 +1,115 @@
+local path = require("path")
+local shell = require("shell")
+local read_project = require("deploy.src.project").read_project
+local notarize = require("deploy.src.notarize")
+local dotenv = require("deploy.src.dotenv")
+local util = require("deploy.src.util")
+local api = require("deploy.src.api")
+local json = require("json")
+
+local function gog_upload(branch, platforms, build_dir, options)
+  print("Building for GOG branch \"" .. branch .. "\"...")
+
+  assert(options.gog_pipeline_builder, "--gog-pipeline-builder is required")
+  assert(options.gog_user, "--gog-user is required")
+  assert(options.gog_password, "--gog-password is required")
+
+  local config = require("deploy.config.gog")
+  local branch_config = config.branches[branch]
+  assert(branch_config, "No such GOG branch defined in config: " .. branch)
+
+  local build_options = util.deep_clone(branch_config.build_options)
+  build_options.mac_identity = options.mac_identity
+
+  path.mkdir(build_dir)
+
+  local template_args = util.deep_clone(read_project())
+  template_args.build_dir = path.fullpath(build_dir)
+  template_args.full_version = template_args.full_version .. (build_options.version_suffix or "")
+
+  for k, v in pairs(branch_config.template) do
+    template_args[k] = v
+  end
+
+  platforms = platforms or { "mac", "windows", "linux" }
+
+  if not options.skip_build then
+    local build = require("deploy.src.build")
+    local mac_app_path, notarization_request_uuid
+    for _, platform in ipairs(platforms) do
+      local build_output = path.join(build_dir, platform)
+      local build_context = build(platform, build_output, build_options)
+
+      if platform == "mac" and not options.skip_notarize and options.apple_id and options.apple_id_password then
+        mac_app_path = path.join(build_output, build_context.title .. ".app")
+        notarization_request_uuid = notarize.notarize(mac_app_path, options)
+      end
+    end
+
+    if notarization_request_uuid then
+      notarize.wait(notarization_request_uuid, options)
+      notarize.staple(mac_app_path)
+    end
+  end
+
+  for _, platform in ipairs(platforms) do
+    local build_output = path.join(build_dir, platform)
+    local build_context = json.decode(util.read_file(path.join(build_output, 'BUILD.json')))
+    template_args["title_" .. platform] = build_context.title
+    template_args["exe_name_" .. platform] = build_context.exe_name
+  end
+
+  print("Uploading to GOG.com branch \"" .. branch .. "\"...")
+  for _, platform in ipairs(platforms) do
+    local project_dir = _G.project_dir or "."
+    local project_path = path.join(build_dir, platform .. ".json")
+    util.template(
+      path.join(project_dir, "deploy", "src", "gog", "templates", platform .. ".json"),
+      project_path,
+      template_args
+    )
+
+    local branch_password = dotenv.getenv("GOG_BRANCH_PASSWORD_" .. branch)
+
+    shell.pexecute({ options.gog_pipeline_builder,
+      "build-game", project_path,
+      "--username=" .. options.gog_user,
+      "--password=" .. options.gog_password,
+      "--branch=" .. branch,
+      "--branch_password=" .. branch_password,
+    })
+  end
+end
+
+local function gog_upload_all(build_dir, options)
+  local config = require("deploy.config.gog")
+  for branch in pairs(config.branches) do
+    gog_upload(branch, nil, path.join(build_dir, branch), options)
+  end
+end
+
+local function with_hooks(f)
+  api.hook_closure(function ()
+    api.register_hook("resolve:per_platform_dependencies", function (additional_deps, removed_deps)
+      local config = require("deploy.config.gog")
+      additional_deps[#additional_deps + 1] = dotenv.getenv("GOG_GALAXY_DEPENDENCY_URL")
+        or config.gog_galaxy_dependency_url
+    end)
+
+    api.register_hook("build:bob_args", function (bob_args, context)
+      util.add_settings_file(bob_args, "gog", context.options.debug)
+    end)
+
+    api.register_hook("build:game_project", function (overrides, context)
+      util.set_ini(overrides, "crit", "gog", 1)
+    end)
+
+    f()
+  end)
+end
+
+return {
+  gog_upload = gog_upload,
+  gog_upload_all = gog_upload_all,
+  with_hooks = with_hooks,
+}

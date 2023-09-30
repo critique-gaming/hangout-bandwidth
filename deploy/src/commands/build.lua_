@@ -1,0 +1,150 @@
+local api = require("deploy.src.api")
+
+local M = {}
+M.id = "cmd_build"
+
+function M.arg_config_mobile(cmd)
+  local dotenv = require("deploy.src.dotenv")
+  cmd:option("--version-code", "Override android.version_code and ios.bundle_version in game.project")
+  cmd:option("--android-keystore", "Path to an Android keystore", dotenv.getenv("ANDROID_KEYSTORE"))
+  cmd:option("--android-keystore-alias", "Alias to the Android signing keypair in the keystore",
+    dotenv.getenv("ANDROID_KEYSTORE_ALIAS")
+  )
+  cmd:option("--android-keystore-password", "The password to the Android keystore",
+    dotenv.getenv("ANDROID_KEYSTORE_PASSWORD")
+  ):show_default(false)
+  cmd:option("--android-keystore-password-file", "The file containing the password to the Android keystore",
+    dotenv.getenv("ANDROID_KEYSTORE_PASSWORD_FILE")
+  )
+  cmd:option("--ios-identity", "iOS certificate identity", dotenv.getenv("IOS_IDENTITY"))
+  cmd:option("--ios-provisioning", "Path to the iOS provisioning profile", dotenv.getenv("IOS_PROVISIONING"))
+  api.run_hook("build:arg_config_mobile", cmd)
+end
+
+function M.arg_config_mac(cmd)
+  local dotenv = require("deploy.src.dotenv")
+  cmd:option("--mac-identity", "macOS certificate identity", dotenv.getenv("MAC_IDENTITY"))
+  cmd:flag("--skip-notarize", "Skip notarization")
+  require("deploy.src.commands.notarize").arg_config(cmd)
+  api.run_hook("build:arg_config_mac", cmd)
+end
+
+function M.arg_config(cmd)
+  local dotenv = require("deploy.src.dotenv")
+  cmd:flag("--debug", "Debug build. Release is default")
+  cmd:flag("--skip-resolve", "Skip dependency resolution")
+  cmd:flag("--skip-git-status", "Skip checking if the project directory is clean before building")
+  cmd:flag("--no-cleanup", "Doesn't reset the repo to its original state after building with bob")
+  cmd:flag("--skip-texture-compression", "Skip texture compression")
+  cmd:option("--build-server", "Defold build server URL", dotenv.getenv("DEFOLD_BUILD_SERVER"))
+  require("deploy.src.commands.resolve").arg_config(cmd)
+  api.run_hook("build:arg_config", cmd)
+end
+
+function M.arg_config_version(cmd)
+  cmd:option("--version", "Override project.version in game.project")
+  cmd:option("--version-suffix", "Append suffix to version string")
+  api.run_hook("build:arg_config_version", cmd)
+end
+
+function M.parser_config(parser)
+  local cmd = parser:command("build", "Build the game"):target("cmd_build")
+  cmd:argument("platform",
+    "One of windows, mac, linux, ios, android, web, switch. Omit to build for all desktop platforms"
+  ):args("?")
+  cmd:option("-bo --build-output", "Build output directory")
+  M.arg_config(cmd)
+  M.arg_config_version(cmd)
+  M.arg_config_mobile(cmd)
+  M.arg_config_mac(cmd)
+  api.run_hook("build:parser_config", parser, cmd)
+end
+
+function M.check_git_status_if_needed(args)
+  if not args.skip_git_status then
+    local check_git_status = require("deploy.src.git_status")
+    if not check_git_status() then
+      print(
+        "ABORTING! The project directory is unclean (according to git status). " ..
+        "If you really know what you're doing, run again with --skip-git-status"
+      )
+      os.exit(1)
+    end
+  end
+end
+
+function M.setup(args)
+  M.check_git_status_if_needed(args)
+  require("deploy.src.commands.bob").setup(args)
+  api.run_hook("build:setup", args)
+end
+
+function M.run(args, post_build)
+  M.setup(args)
+
+  if not args.skip_resolve and not args.skip_build then
+    local bob = require("deploy.src.bob")
+    bob.resolve(args)
+  end
+
+  local path = require("path")
+
+  local function package(build_output, platform)
+    if not args.skip_build then
+      api.run_hook("build:pre_build", platform, build_output)
+      local build = require("deploy.src.build")
+      build(platform, build_output, args)
+      api.run_hook("build:post_build", platform, build_output)
+    end
+
+    local notarize
+    local app_path
+    local notarization_id
+    if platform == "mac" and not args.skip_notarize and args.apple_id and args.apple_id_password then
+      api.run_hook("build:pre_notarize", platform, build_output)
+
+      notarize = require("deploy.src.notarize")
+      local util = require("deploy.src.util")
+      local json = require("json")
+
+      local project_title = json.decode(util.read_file(path.join(build_output, 'BUILD.json'))).title
+      app_path = path.join(build_output, project_title .. ".app")
+      notarization_id = notarize.notarize(app_path, args)
+    end
+
+    -- Split process in two steps so that we do other things while notarization finishes
+    return function ()
+      if notarize then
+        notarize.wait(notarization_id, args)
+        notarize.staple(app_path)
+        api.run_hook("build:post_notarize", platform, build_output)
+      end
+
+
+      if post_build then
+        post_build(platform, build_output)
+      end
+    end
+  end
+
+  local project_dir = _G.project_dir or "."
+
+  if args.platform then
+    package(args.build_output or path.join(project_dir, "dist", "build", args.platform), args.platform)()
+
+  else
+    local platforms = { "mac", "windows", "linux" }
+    local finish = {}
+    for _, platform in ipairs(platforms) do
+      finish[#finish + 1] = package(
+        path.join(args.build_output or path.join(project_dir, "dist", "build"), platform),
+        platform
+      )
+    end
+    for _, finish_func in ipairs(finish) do
+      finish_func()
+    end
+  end
+end
+
+return M

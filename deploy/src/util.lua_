@@ -1,0 +1,156 @@
+local function read_file(filename)
+  local f, err = io.open(filename, "rb")
+  assert(f, err)
+  local data = f:read("*all")
+  f:close()
+  return data
+end
+
+local function write_file(filename, data)
+  local f, err = io.open(filename, "wb")
+  assert(f, err)
+  f:write(data)
+  f:close()
+end
+
+local function template(source, destination, args)
+  local f, err = io.open(source, "r")
+  assert(f, err)
+  local text = f:read("*all")
+  f:close()
+
+  text = text:gsub("${([a-zA-Z_][a-zA-Z_0-9]*)}", args)
+
+  f, err = io.open(destination, "w")
+  assert(f, err)
+  f:write(text)
+  f:close()
+end
+
+local function deep_clone(t)
+  if type(t) ~= "table" then
+    return t
+  end
+
+  local new_t = {}
+  for k, v in pairs(t) do
+    new_t[deep_clone(k)] = deep_clone(v)
+  end
+  return new_t
+end
+
+local function set_ini(ini, category, key, value)
+  ini[category] = ini[category] or {}
+  ini[category][key] = value
+end
+
+-- Try to make path relative to project dir, so that path hashes are kept stable
+local function relativise_path(filename, relative_to)
+  local path = require("path")
+  filename = path.normalize(path.abspath(filename))
+
+  local relative_to_abs = path.normalize(path.abspath(relative_to or _G.project_dir or "."))
+  local pwd = path.ensure_dir_end(relative_to_abs)
+
+  if filename:sub(1, #pwd) == pwd then
+    filename = filename:sub(#pwd + 1)
+  end
+
+  return filename
+end
+
+
+local function add_settings_file(bob_args, filename, debug)
+  local path = require("path")
+  local fpath = path.join(_G.project_dir or ".", "deploy", "config", "project_properties", filename)
+
+  local general_file = fpath .. ".ini"
+  if path.isfile(general_file) then
+    table.insert(bob_args, "--settings")
+    table.insert(bob_args, general_file)
+  end
+
+  local variant_file = fpath .. (debug and "_debug" or "_release") .. ".ini"
+  if path.isfile(variant_file) then
+    table.insert(bob_args, "--settings")
+    table.insert(bob_args, variant_file)
+  end
+end
+
+local function rmdir(p)
+  local path = require("path")
+  pcall(function ()
+    path.each(path.join(p,"*"), function(P)
+      path.remove(P)
+    end,{
+      param = "f";   -- request full path
+      delay = true;   -- use snapshot of directory
+      recurse = true; -- include subdirs
+      reverse = true; -- subdirs at first
+    })
+    path.remove(p)
+  end)
+end
+
+local function split(s, pattern)
+  return coroutine.wrap(function ()
+    local last_end
+    local pat = "(.-)" .. pattern
+    while true do
+      local start, end_, capture = s:find(pat, last_end)
+      if not start then break end
+      coroutine.yield(capture)
+      last_end = end_ + 1
+    end
+    coroutine.yield(s:sub(last_end or 1))
+  end)
+end
+
+local dump
+local function format_key(x)
+  if type(x) == "string" and string.match(x, "^[_a-zA-Z][_0-9a-zA-Z]*$") then
+    return x
+  end
+  return "[" .. dump(x) .. "]"
+end
+
+function dump(x, identation)
+  identation = identation or ""
+  local tp = type(x)
+  if tp == "table" then
+    local ident = identation .. "  "
+    local s = "{"
+    local n = #x
+    for i = 1, n do
+      s = s .. "\n" .. ident .. dump(x[i], ident) .. ","
+    end
+    for k, v in pairs(x) do
+      if type(k) ~= "number" or k < 1 or k > n then
+        s = s .. "\n" .. ident .. format_key(k) .. " = " .. dump(v, ident) .. ","
+      end
+    end
+    if s == "{" then
+      s = "{}"
+    else
+      s = s .. "\n" .. identation .. "}"
+    end
+    return s
+  elseif tp == "string" then
+    return string.format("%q", x)
+  else
+    return tostring(x)
+  end
+end
+
+return {
+  read_file = read_file,
+  write_file = write_file,
+  template = template,
+  deep_clone = deep_clone,
+  set_ini = set_ini,
+  add_settings_file = add_settings_file,
+  rmdir = rmdir,
+  split = split,
+  relativise_path = relativise_path,
+  dump = dump,
+}

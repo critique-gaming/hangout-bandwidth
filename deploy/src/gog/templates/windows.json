@@ -1,0 +1,50 @@
+{
+    "project": {
+        "baseProductId": "${product_id}",
+        "clientId": "${client_id}",
+        "clientSecret": "${client_secret}",
+        "version": "${full_version}",
+        "installDirectory": "${title_windows}",
+        "name": "${title_windows}",
+        "platform": "windows",
+        "tags": [
+            "editor_v_1_4_0"
+        ],
+        "languageMode": "together",
+        "products": [
+            {
+                "name": "${title_windows}",
+                "productId": "${product_id}",
+                "depots": [
+                    {
+                        "name": "main",
+                        "folder": "${build_dir}/windows/${title_windows}",
+                        "languages": [
+                            "en-US"
+                        ],
+                        "osBitness": [
+                            "64"
+                        ]
+                    }
+                ],
+                "tasks": [
+                    {
+                        "type": "FileTask",
+                        "name": "${title_windows}",
+                        "languages": [
+                            "en-US"
+                        ],
+                        "category": "game",
+                        "path": "${exe_name_windows}.exe",
+                        "isPrimary": true,
+                        "osBitness": [
+                            "64"
+                        ]
+                    }
+                ],
+                "supportDepots": []
+            }
+        ],
+        "scriptInterpreter": true
+    }
+}

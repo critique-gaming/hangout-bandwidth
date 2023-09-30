@@ -1,0 +1,153 @@
+local zip = require("deploy.src.zip")
+local path = require("path")
+local shell = require("deploy.src.lib.shell")
+local read_project = require("deploy.src.project").read_project
+local dotenv = require("deploy.src.dotenv")
+
+local run_with_filter = function (args, filter)
+  local h = io.popen(shell.escape(args))
+  while true do
+    local line = h:read("*l")
+    if not line then break end
+    filter(line)
+  end
+  h:close()
+end
+
+local urand = assert (io.open ('/dev/urandom', 'rb'))
+
+local function rng (b, m, r)
+  b = b or 4
+  m = m or 256
+  r = r or urand
+  local n, s = 0, r:read (b)
+
+  for i = 1, s:len () do
+    n = m * n + s:byte (i)
+  end
+
+  return n
+end
+
+local function auth(options, args)
+  local username = options.apple_id
+  local password = options.apple_id_password
+  local keychain_profile = options.notary_profile
+  if not keychain_profile then
+    assert(username, "--apple-id is required")
+    assert(password, "--apple-id-password is required")
+  end
+
+  if args then
+    if keychain_profile then
+      args[#args + 1] = "--keychain-profile"
+      args[#args + 1] = keychain_profile
+    else
+      if username then
+        args[#args + 1] = "--apple-id"
+        args[#args + 1] = username
+      end
+      if username then
+        args[#args + 1] = "--password"
+        args[#args + 1] = password
+      end
+      if options.asc_provider then
+        args[#args + 1] = "--asc-provider"
+        args[#args + 1] = options.asc_provider
+      end
+    end
+  end
+  return args
+end
+
+
+local function notarize(app_path, options)
+  if dotenv.os_name ~= "Darwin" then
+    error("Notarization is only supported on macOS")
+  end
+
+  auth(options)
+
+  local has_ticket
+  run_with_filter({ "xcrun", "stapler", "staple", app_path }, function (line)
+    has_ticket = has_ticket or line:find("The staple and validate action worked!")
+  end)
+  if has_ticket then
+    print("This app is already notarized. Skipping notarization.")
+    return
+  end
+
+  print("Notarizing app...")
+
+  local zip_path = app_path .. ".notarize.zip"
+  zip.create(app_path, zip_path, 1)
+
+  local cleanup = function ()
+    pcall(function () path.remove(zip_path) end)
+  end
+
+  local request_uuid
+  local ok, error_msg = pcall(function ()
+    run_with_filter(auth(options, {
+      "xcrun", "notarytool", "submit", "--no-progress", zip_path,
+    }), function (line)
+      print(line)
+      request_uuid = request_uuid or line:match("^%s*id:%s*([0-9a-zA-Z-]+)")
+    end)
+
+    if not request_uuid then
+      error("Notarize call didn't return a RequestUUID")
+    end
+  end)
+
+  if not ok then
+    cleanup()
+    error(error_msg)
+  end
+
+  cleanup()
+
+  return request_uuid
+end
+
+local function wait(request_uuid, options)
+  if not request_uuid then
+    return
+  end
+
+  auth(options)
+
+  print("Waiting for notarization to finish...")
+
+  local status
+  run_with_filter(auth(options, {
+    "xcrun", "notarytool", "wait", request_uuid,
+  }), function (line)
+    status = status or line:match("^%s*status:%s*(.*)$")
+  end)
+
+  if status == "Invalid" then
+    shell.pexecute(auth(options, { "xcrun", "notarytool", "log", request_uuid }))
+    error("Notarization failed")
+  end
+
+  print(status)
+end
+
+local function staple(app_path)
+  print("Stapling notarization ticket to app...")
+  shell.pexecute({ "xcrun", "stapler", "staple", app_path })
+end
+
+local function notarize_and_staple(app_path, options)
+  local request_uuid = notarize(app_path, options)
+  wait(request_uuid, options)
+  staple(app_path)
+end
+
+return {
+  notarize = notarize,
+  wait = wait,
+  staple = staple,
+  notarize_and_staple = notarize_and_staple,
+}

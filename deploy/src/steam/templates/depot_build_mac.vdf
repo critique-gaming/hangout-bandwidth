@@ -1,0 +1,20 @@
+"DepotBuildConfig"
+{
+  "DepotID" "${depot_id_mac}"
+  "ContentRoot" "mac"
+  "FileMapping"
+  {
+    "LocalPath" "*"
+    "DepotPath" "."
+    "recursive" "1"
+  }
+  "FileExclusion" ".DS_Store"
+  "FileExclusion" "thumbs.db"
+  "FileExclusion" "Thumbs.db"
+  "FileExclusion" "${title_mac}.dSYM*"
+  "FileProperties"
+  {
+    "LocalPath" "${title_mac}.app/Contents/MacOS/${exe_name_mac}"
+    "Attributes" "executable"
+  }
+}

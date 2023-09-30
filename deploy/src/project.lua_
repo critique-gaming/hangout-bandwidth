@@ -1,0 +1,54 @@
+local M = {}
+local project = nil
+local project_dir = _G.project_dir or "."
+
+local function get_commit_hash()
+  local shell = require("deploy.src.lib.shell")
+  local commit = shell.read({ "git", "-C", project_dir, "show", "-s", "--format=%H" }) or ""
+  return commit:match("^%s*(%S%S%S%S%S%S%S%S)")
+end
+
+local function parse_ini(fname)
+  local inifile = require("inifile")
+  local ini = inifile.parse(fname)
+
+  for _, section in pairs(ini) do
+    local split_keys = {}
+    for key, value in pairs(section) do
+      local keyname, num = key:match("^([%w_]+)#([0-9]+)$")
+      if keyname then
+        split_keys[keyname] = split_keys[keyname] or {}
+        split_keys[keyname][tonumber(num) + 1] = value
+        section[key] = nil
+      end
+    end
+    for key, values in pairs(split_keys) do
+      section[key] = table.concat(values, ",")
+    end
+  end
+
+  return ini
+end
+M.parse_ini = parse_ini
+
+function M.read_project()
+  if project then return project end
+
+  local path = require("path")
+  local ini = parse_ini(path.join(project_dir, "game.project"))
+  ini.project = ini.project or {}
+
+  project = {
+    ini = ini,
+    title = ini.project.title,
+    version = ini.project.version,
+    commit_hash = get_commit_hash(),
+  }
+  project.full_version = project.commit_hash
+    and project.version .. "." .. project.commit_hash
+    or project.version
+
+  return project
+end
+
+return M

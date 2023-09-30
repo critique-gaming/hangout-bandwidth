@@ -1,0 +1,43 @@
+name: Build for web then upload to S3
+on:
+  workflow_dispatch:
+  push:
+    branches: [dist-web]
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        path: 'repo'
+
+    - name: Setup Java
+      uses: actions/setup-java@v1.4.3
+      with:
+        java-version: '11'
+
+    - name: Setup Defold
+      uses: dapetcu21/setup-defold@v3.0.2
+
+    - name: Setup LuaJIT
+      uses: dapetcu21/gh-actions-lua@v9.0.0
+      with:
+        luaVersion: 'luajit'
+
+    - name: Build
+      run: 'lua deploy.lua_ build web'
+      working-directory: 'repo'
+
+    - name: Upload website to S3
+      run: 'aws s3 sync "dist/build/web/$(./deploy_ props title)" "s3://${{ secrets.S3_BUCKET_WEB }}"'
+      working-directory: 'repo'
+
+    - name: Invalidate Cloudfront
+      run: 'aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"'

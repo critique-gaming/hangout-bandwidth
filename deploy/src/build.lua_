@@ -1,0 +1,331 @@
+local bob = require("deploy.src.bob")
+local path = require("path")
+local util = require("deploy.src.util")
+local shell = require("shell")
+local read_project = require("deploy.src.project").read_project
+local dotenv = require("deploy.src.dotenv")
+local api = require("deploy.src.api")
+local inifile = require("inifile")
+local json = require("json")
+
+local set_ini = util.set_ini
+local project_dir = _G.project_dir or "."
+
+local platforms = {
+  mac = "x86_64-darwin",
+  linux = "x86_64-linux",
+  windows = "x86_64-win32",
+  android = "armv7-android",
+  ios = "arm64-darwin",
+  web = "js-web",
+  switch = "arm64-nx64",
+}
+
+local rmdir = util.rmdir
+
+local function edit_game_project(context)
+  local options = context.options
+  local project = context.project
+  local platform = context.platform
+  local overrides = context.overrides
+  local ini = project.ini
+
+  set_ini(overrides, "crit", "bundled", 1)
+
+  if not options.debug and ini.native_extension and
+    ini.native_extension.app_manifest == "/deploy/config/manifests/engine_debug.appmanifest"
+  then
+    set_ini(overrides, "native_extension", "app_manifest", "/deploy/config/manifests/engine.app_manifest")
+  end
+
+  set_ini(overrides, "project", "version", context.versions.version)
+  set_ini(overrides, "project", "full_version", context.versions.full_version)
+
+  if options.version_code then
+    set_ini(overrides, "android", "version_code", options.version_code)
+    set_ini(overrides, "ios", "bundle_version", options.version_code)
+  end
+
+  if options.skip_texture_compression then
+    set_ini(overrides, "graphics", "texture_profiles", "/builtins/graphics/default.texture_profiles")
+  end
+
+  set_ini(overrides, "project", "dependencies", bob.modify_dependencies_string(
+    ini.project and ini.project.dependencies or "",
+    bob.get_platform_dependencies(options, platform)
+  ))
+
+  api.run_hook("build:game_project", overrides, context)
+
+  inifile.save(context.overrides_file, overrides)
+  return function ()
+    os.remove(context.overrides_file)
+  end
+end
+
+local function write_env_lua(context)
+  local env_lua_path = path.join(project_dir, "_env", "env.lua")
+
+  local original_env_str
+  local env_lua = io.open(env_lua_path, "r")
+  if env_lua then
+    original_env_str = env_lua:read("*all")
+    env_lua:close()
+  end
+
+  local env_object = { bundled = true }
+  api.run_hook("build:env_lua", env_object, context)
+
+  local env_str = "return " .. util.dump(env_object)
+  util.write_file(env_lua_path, env_str)
+
+  return function ()
+    if original_env_str then
+      util.write_file(env_lua_path, original_env_str)
+    else
+      pcall(function () path.remove(env_lua_path) end)
+    end
+  end
+end
+
+local function run_codesign(item, identity)
+  shell.pexecute({
+    "xcrun",
+    "codesign",
+    "--force",
+    "--sign", identity,
+    "--options", "runtime",
+    "--timestamp",
+    "--no-strict",
+    "--entitlements", path.join(project_dir, "deploy", "config", "manifests", "mac", "entitlements.plist"),
+    item
+  })
+end
+
+local function codesign(platform, output_dir, options, context)
+  if platform ~= "mac" or not options.mac_identity then
+    return
+  end
+  print("Code signing for " .. platform .. "...")
+
+  if dotenv.os_name ~= "Darwin" then
+    error("Code signing macOS builds can only be done on macOS")
+  end
+
+  local project_title = context.title
+  local app_path = path.join(output_dir, project_title .. ".app")
+  local identity = options.mac_identity
+
+  path.each(path.join(app_path, "Contents", "MacOS", "*.dylib"), function (binary)
+    run_codesign(binary, identity)
+  end)
+  run_codesign(app_path, identity)
+
+  return app_path
+end
+
+local function resolve_versions(options)
+  local project = read_project()
+  local version = options.version or project.version
+  local full_version = (project.commit_hash
+    and version .. "." .. project.commit_hash
+    or version) .. (options.version_suffix or "")
+  return {
+    version = version,
+    full_version = full_version,
+  }
+end
+
+local function build(platform, output_dir, options)
+  print("Building for " .. platform .. "...")
+
+  local platform_name = platforms[platform]
+  if not platform_name then
+    error("Unsupported platform: " .. platform)
+  end
+
+  rmdir(path.join(project_dir, "build"))
+  rmdir(path.join(project_dir, ".internal", "cache"))
+  rmdir(output_dir)
+  path.mkdir(output_dir)
+
+  local resolved_versions = resolve_versions(options)
+
+  local project = read_project()
+  local context = {
+    options = options,
+    project = project,
+    versions = resolved_versions,
+    platform = platform,
+    output_dir = output_dir,
+    overrides = {},
+    overrides_file = path.join(output_dir, "deploy_overrides.ini"),
+  }
+
+  local restore_game_project = edit_game_project(context)
+  local restore_env_lua = write_env_lua(context)
+  local to_cleanup = api.run_hook("build:prepare", context)
+  local passfile
+
+  local function restore()
+    if options.no_cleanup then
+      print(
+        "WARNING: Running with --no-cleanup means that the repo will be left in an unclean state. " ..
+        "Please run something like `git add . && git reset --hard` before running this script again."
+      )
+      return
+    end
+
+    if passfile then
+      os.remove(passfile)
+    end
+
+    for i = to_cleanup.n, 1, -1 do
+      local f = to_cleanup[i]
+      if f then
+        f()
+      end
+    end
+    restore_env_lua()
+    restore_game_project()
+  end
+
+  local variant = options.debug and "debug" or "release"
+  local bob_args = {
+    "-r", project_dir,
+    "--platform", platform_name, "--archive", "-bo", output_dir, "--variant=" .. variant,
+    "--with-symbols",
+    "--exclude-build-folder", "dist,deploy,doc,docs",
+    "distclean", "build", "bundle"
+  }
+
+  if options.build_server and options.build_server ~= "" then
+    table.insert(bob_args, "--build-server=" .. options.build_server)
+  end
+
+  if options.defoldsdk and options.defoldsdk ~= "" then
+    bob_args[#bob_args + 1] = "--defoldsdk"
+    bob_args[#bob_args + 1] = options.defoldsdk
+  end
+
+  if not options.skip_texture_compression then
+    table.insert(bob_args, "--texture-compression")
+    table.insert(bob_args, "true")
+  end
+
+  if platform == "ios" then
+    if options.ios_identity and options.ios_provisioning then
+      table.insert(bob_args, "--identity")
+      table.insert(bob_args, options.ios_identity)
+      table.insert(bob_args, "--mobileprovisioning")
+      table.insert(bob_args, options.ios_provisioning)
+    else
+      print(
+        "WARNING! You did not provide a code signing identity or provisioning profile. " ..
+        "Your iOS build will be unsigned!"
+      )
+    end
+
+    table.insert(bob_args, "--architectures")
+    table.insert(bob_args, "arm64-darwin")
+  end
+
+  if platform == "android" then
+    table.insert(bob_args, "--bundle-format")
+    table.insert(bob_args, "aab")
+
+    if options.android_keystore then
+      table.insert(bob_args, "--keystore")
+      table.insert(bob_args, options.android_keystore)
+    end
+    if options.android_keystore_alias then
+      table.insert(bob_args, "--keystore-alias")
+      table.insert(bob_args, options.android_keystore_alias)
+    end
+    if options.android_keystore_password then
+      passfile = path.join(output_dir, "android_keystore_password.txt")
+      util.write_file(passfile, options.android_keystore_password)
+      table.insert(bob_args, "--keystore-pass")
+      table.insert(bob_args, passfile)
+    elseif options.android_keystore_password_file then
+      table.insert(bob_args, "--keystore-pass")
+      table.insert(bob_args, options.android_keystore_password_file)
+    end
+  end
+
+  if options.debug and (platform == "android" or platform == "ios") then
+    table.insert(bob_args, "--strip-executable")
+  end
+
+  table.insert(bob_args, "--settings")
+  table.insert(bob_args, context.overrides_file)
+
+  local manifest_private_key = path.join(project_dir, "deploy", "config", "manifests", "manifest.private.der")
+  if path.isfile(manifest_private_key) then
+    table.insert(bob_args, "--manifest-private-key")
+    table.insert(bob_args, manifest_private_key)
+  end
+
+  local manifest_public_key = path.join(project_dir, "deploy", "config", "manifests", "manifest.public.der")
+  if path.isfile(manifest_public_key) then
+    table.insert(bob_args, "--manifest-public-key")
+    table.insert(bob_args, manifest_public_key)
+  end
+
+  table.insert(bob_args, "--archive-resource-padding")
+  table.insert(bob_args, "16")
+
+  local ok, error_msg = pcall(function ()
+    api.run_hook("build:bob_args", bob_args, context)
+    bob.run(bob_args)
+  end)
+
+  if not ok then
+    pcall(function ()
+      path.each(path.join(project_dir, "build", "*"), function (fname)
+        local log_fname = path.join(fname, "log.txt")
+        local ok_, log_data = pcall(function ()
+          return util.read_file(log_fname)
+        end)
+        if ok_ then
+          print("Contents of " .. log_fname .. ":")
+          io.write(log_data)
+          io.flush()
+        end
+      end)
+    end)
+
+    restore()
+    error(error_msg)
+  end
+
+  restore()
+
+  context.title = (context.overrides.project and context.overrides.project.title)
+    or (context.project.ini.project and context.project.ini.project.title)
+    or "Unnamed"
+
+  context.exe_name = context.title:gsub("[^a-zA-Z0-9_]", "")
+
+  util.write_file(path.join(output_dir, "BUILD.json"), json.encode({
+    title = context.title,
+    exe_name = context.exe_name,
+    version = resolved_versions.full_version,
+    variant = variant,
+  }))
+
+  if platform == "windows" then
+    pcall(function ()
+      path.rename(
+        path.join(output_dir, context.title, "dmengine.pdb"),
+        path.join(output_dir, "dmengine.pdb")
+      )
+    end)
+  end
+
+  codesign(platform, output_dir, options, context)
+
+  return context
+end
+
+return build

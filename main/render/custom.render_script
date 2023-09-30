@@ -1,0 +1,159 @@
+local Layout = require "crit.layout"
+local Button = require "crit.button"
+local DragAndDrop = require "crit.drag_and_drop"
+local ScrollBar = require "crit.scrollbar"
+local Scroll = require "crit.scroll"
+local dispatcher = require "crit.dispatcher"
+local transitions = require "monarch.transitions.gui"
+local env = require "crit.env"
+
+local max_ar = env.max_ar or (16 / 9)
+local min_ar = env.min_ar or (16 / 10)
+
+Layout.default_scale_by = "y"
+
+local function configure_layout(self)
+  local window_width = render.get_window_width()
+  local window_height = render.get_window_height()
+
+  local viewport_width = window_width
+  local viewport_height = window_height
+  if not env.no_letterboxing then
+    local aspect = viewport_width / viewport_height
+    if aspect > max_ar then
+      viewport_width = math.ceil(viewport_height * max_ar)
+    elseif aspect < min_ar then
+      viewport_height = math.ceil(viewport_width / min_ar)
+    end
+  end
+
+  local camera_height = Layout.design_height
+  local camera_width = viewport_width * camera_height / viewport_height
+  local camera_left = (Layout.design_width - camera_width) * 0.5
+
+  Layout.set_metrics({
+    window_width = window_width,
+    window_height = window_height,
+    viewport_width = viewport_width,
+    viewport_height = viewport_height,
+    camera_left = camera_left,
+    camera_bottom = 0,
+    camera_right = camera_left + camera_width,
+    camera_top = camera_height,
+  })
+
+  transitions.window_resized(Layout.viewport_width, Layout.viewport_height);
+end
+
+function init(self)
+  self.tile_pred = render.predicate({"tile"})
+  self.gui_pred = render.predicate({"gui"})
+  self.text_pred = render.predicate({"text"})
+  self.particle_pred = render.predicate({"particle"})
+  self.tile2_pred = render.predicate({"tile2"})
+  self.gui2_pred = render.predicate({"gui2"})
+  self.text2_pred = render.predicate({"text2"})
+  self.particle2_pred = render.predicate({"particle2"})
+
+  self.clear_color = vmath.vector4(0, 0, 0, 0)
+  self.clear_color.x = sys.get_config("render.clear_color_red", 0)
+  self.clear_color.y = sys.get_config("render.clear_color_green", 0)
+  self.clear_color.z = sys.get_config("render.clear_color_blue", 0)
+  self.clear_color.w = sys.get_config("render.clear_color_alpha", 0)
+
+  Button.default_sprite_action_to_position = Layout.action_to_camera
+  Button.default_gui_action_to_position = Layout.action_to_offset_design
+  DragAndDrop.default_sprite_action_to_position = Layout.action_to_camera
+  DragAndDrop.default_gui_action_to_position = Layout.action_to_offset_design
+  ScrollBar.default_gui_action_to_position = Layout.action_to_offset_design
+  Scroll.default_go_action_to_dy = function (action)
+    return action.screen_dy * Layout.viewport_to_camera_scale_y
+  end
+
+  self.view = vmath.matrix4()
+
+  self.black_bars = true
+  configure_layout(self)
+end
+
+function update(self)
+  render.set_depth_mask(true)
+  render.set_stencil_mask(0xff)
+  render.clear({
+    [render.BUFFER_COLOR_BIT] = self.clear_color,
+    [render.BUFFER_DEPTH_BIT] = 1,
+    [render.BUFFER_STENCIL_BIT] = 0
+  })
+
+  -- Setting the viewport from Layout
+  render.set_viewport(
+    Layout.viewport_origin_x, Layout.viewport_origin_y,
+    Layout.viewport_width, Layout.viewport_height
+  )
+
+  -- Render Projection
+  render.set_view(self.view)
+
+  render.set_depth_mask(false)
+  render.disable_state(render.STATE_DEPTH_TEST)
+  render.disable_state(render.STATE_STENCIL_TEST)
+  render.enable_state(render.STATE_BLEND)
+  render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+  render.disable_state(render.STATE_CULL_FACE)
+
+  -- We just take the projection straight from Layout
+  -- It's cached, so it won't be recalculated each frame
+  render.set_projection(Layout.get_projection_matrix())
+
+  render.draw(self.tile_pred)
+  render.draw(self.particle_pred)
+
+  -- render GUI
+  --
+  render.set_view(vmath.matrix4())
+  render.set_projection(Layout.get_gui_projection_matrix()) -- We do the same for GUI projection
+
+  render.enable_state(render.STATE_STENCIL_TEST)
+  render.draw(self.gui_pred)
+  render.draw(self.text_pred)
+  render.disable_state(render.STATE_STENCIL_TEST)
+
+  -- Render Projection2
+  render.set_view(self.view)
+
+  render.set_depth_mask(false)
+  render.disable_state(render.STATE_DEPTH_TEST)
+  render.disable_state(render.STATE_STENCIL_TEST)
+  render.enable_state(render.STATE_BLEND)
+  render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+  render.disable_state(render.STATE_CULL_FACE)
+
+  -- We just take the projection straight from Layout
+  -- It's cached, so it won't be recalculated each frame
+  render.set_projection(Layout.get_projection_matrix())
+
+  render.draw(self.tile2_pred)
+  render.draw(self.particle2_pred)
+  render.draw_debug3d()
+
+  -- render GUI
+  --
+  render.set_view(vmath.matrix4())
+  render.set_projection(Layout.get_gui_projection_matrix()) -- We do the same for GUI projection
+
+  render.enable_state(render.STATE_STENCIL_TEST)
+  render.draw(self.gui2_pred)
+  render.draw(self.text2_pred)
+  render.disable_state(render.STATE_STENCIL_TEST)
+end
+
+function on_message(self, message_id, message)
+  if message_id == hash("clear_color") then
+    self.clear_color = message.color
+  elseif message_id == hash("set_view_projection") then
+    self.view = message.view
+  elseif message_id == hash("window_resized") then
+    configure_layout(self)
+    dispatcher.dispatch("window_change_size")
+  end
+end
