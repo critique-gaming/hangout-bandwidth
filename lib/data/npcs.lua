@@ -11,6 +11,11 @@ local M = {
     p_dislike_interrupt_topic_start = 0.8,
     p_dislike_interrupt_topic_end = 0.1,
   },
+  deer1 = { extends = "deer" },
+  deer2 = { extends = "deer" },
+  deer3 = { extends = "deer" },
+  deer4 = { extends = "deer" },
+
   dog = { -- The asshole
     popularity = 0.5,
     p_deny_interruptions = 0.7,
@@ -23,6 +28,10 @@ local M = {
     p_dislike_interrupt_topic_start = 0.8,
     p_dislike_interrupt_topic_end = 0.1,
   },
+  dog1 = { extends = "dog" },
+  dog2 = { extends = "dog" },
+  dog3 = { extends = "dog" },
+
   fox = { -- The star
     popularity = 0.8,
     p_deny_interruptions = 0.5,
@@ -35,6 +44,10 @@ local M = {
     p_dislike_interrupt_topic_start = 0.6,
     p_dislike_interrupt_topic_end = 0.05,
   },
+  fox1 = { extends = "fox" },
+  fox2 = { extends = "fox" },
+  fox3 = { extends = "fox" },
+
   cat = { -- The judge
     popularity = 0.7,
     p_deny_interruptions = 0.5,
@@ -48,6 +61,10 @@ local M = {
     p_dislike_interrupt_topic_end = 0.1,
 
   },
+  cat1 = { extends = "cat" },
+  cat2 = { extends = "cat" },
+  cat3 = { extends = "cat" },
+
   frog = { -- The cheer
     popularity = 0.4,
     p_deny_interruptions = 0.7,
@@ -60,6 +77,10 @@ local M = {
     p_dislike_interrupt_topic_start = 0.8,
     p_dislike_interrupt_topic_end = 0.1,
   },
+  frog1 = { extends = "frog" },
+  frog2 = { extends = "frog" },
+  frog3 = { extends = "frog" },
+
   horse = { -- The perfect
     popularity = 0.9,
     p_deny_interruptions = 0.1,
@@ -72,6 +93,10 @@ local M = {
     p_dislike_interrupt_topic_start = 0.8,
     p_dislike_interrupt_topic_end = 0.1,
   },
+  horse1 = { extends = "horse" },
+  horse2 = { extends = "horse" },
+  horse3 = { extends = "horse" },
+
   rabbit = { -- The climber
     popularity = 0.3,
     p_deny_interruptions = 0.7,
@@ -84,6 +109,10 @@ local M = {
     p_dislike_interrupt_topic_start = 0.8,
     p_dislike_interrupt_topic_end = 0.1,
   },
+  rabbit1 = { extends = "rabbit" },
+  rabbit2 = { extends = "rabbit" },
+  rabbit3 = { extends = "rabbit" },
+
   elephant = { -- The coward
     popularity = 0.5,
     p_deny_interruptions = 0.1,
@@ -96,10 +125,30 @@ local M = {
     p_dislike_interrupt_topic_start = 0.6,
     p_dislike_interrupt_topic_end = 0.05,
   },
+  elephant1 = { extends = "elephant" },
+  elephant2 = { extends = "elephant" },
+  elephant3 = { extends = "elephant" },
 }
 
+local function resolve(t)
+  if not t.extends then
+    return
+  end
+
+  local superclass = M[t.extends]
+  t.extends = nil
+  resolve(superclass)
+
+  for k, v in pairs(superclass) do
+    if t[k] ~= nil then
+      t[k] = v
+    end
+  end
+end
+
 for k, v in pairs(M) do
-  v.id = v.id or k
+  resolve(v)
+  v.id = k
 end
 
 return M
