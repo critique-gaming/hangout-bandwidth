@@ -35,8 +35,15 @@ function M.init_npc_agent(options)
   self.pes_interrupt_topic_end = 0.15
   self.pes_interrupt_topic_start = 0.002
   self.patience = 5
+  self.p_dislike_interrupt_topic_start = 0.8
+  self.p_dislike_interrupt_topic_end = 0.1
+  self.p_popularity_lying = 0.2
+  self.pes_expectation = 0.05
+  self.p_hide_expectation = 0.5
 
   local interruption_deny_elapsed = -1
+  local pending_expectation_like = 0
+  local pending_expectation_like_target = nil
 
   local function get_action()
     return 'change'
@@ -67,15 +74,43 @@ function M.init_npc_agent(options)
     end
   end
 
-  function self.request_interruption(interruptee, time_left)
+  function self.request_interruption(interruptee, interruption_duration)
     if self.controller.can_deny_interruption() then
       if math.random() < self.p_deny_interruptions then
-        interruption_deny_elapsed = time_left * 0.5
+        interruption_deny_elapsed = interruption_duration * 0.75
       end
+    end
+
+    local _, topic_progress = self.controller.get_current_topic()
+    local p_dislike_interrupt = (1 - topic_progress)
+      * (self.p_dislike_interrupt_topic_end - self.p_dislike_interrupt_topic_start)
+      + self.p_dislike_interrupt_topic_start
+    if math.random() < p_dislike_interrupt then
+      self.controller.give_like(self, interruptee, -1)
     end
   end
 
-  function self.interrupted(interruptee)
+  local function set_expectation(expectation)
+    self.expectation = expectation
+
+    local reported_expectation = expectation
+    if expectation then
+      if math.random() < self.p_hide_expectation then
+        reported_expectation = "hidden"
+      end
+    end
+
+    self.controller.on_set_expectation(self, reported_expectation)
+  end
+
+  function self.topic_started(topic)
+    if self.expectation then
+      pending_expectation_like = topic.action == self.expectation and 1 or -1
+      pending_expectation_like_target = topic.speaker
+    else
+      pending_expectation_like = 0
+      pending_expectation_like_target = nil
+    end
   end
 
   return self
@@ -84,6 +119,7 @@ end
 function M.init_controller(agents, options)
   local pending_interruption_duration = 1.0
   local denied_interrupt_bonus = 2.0
+  local popularity_bonus_per_like = 0.1
 
   local current_topic = nil
   local time_remaining = 0
@@ -98,6 +134,8 @@ function M.init_controller(agents, options)
   self.on_interruption_accepted = self.on_interruption_accepted or function (_pending_topic, _old_topic) end
   self.on_interruption_denied = self.on_interruption_denied or function (_pending_topic, _old_topic) end
   self.on_change_topic = self.on_change_topic or function (_topic) end
+  self.on_gain_like = self.on_gain_like or function (_sender, _target, _like_amount, _old_popularity, _new_popularity) end
+  self.on_set_expectation = self.on_set_expectation or function (_agent, _expectation) end
 
   local function start_speaking(topic)
     current_topic = topic
@@ -219,6 +257,13 @@ function M.init_controller(agents, options)
     end
 
     return true
+  end
+
+  function self.give_like(sender, target, like_amount)
+    local popularity_gain = popularity_bonus_per_like * like_amount * sender.popularity
+    local old_popularity = target.popularity
+    target.popularity = math.max(0, math.min(1, old_popularity + popularity_gain))
+    self.on_gain_like(sender, target, like_amount, old_popularity, target.popularity)
   end
 
   for _, agent in ipairs(agents) do

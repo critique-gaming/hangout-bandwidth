@@ -44,6 +44,14 @@ function init(self)
       label.set_text("interruption#label", "INTERRUPTION!!! " .. new_topic.speaker.id)
       print("interruption requested: ", new_topic.speaker.id)
     end,
+
+    on_gain_like = function (sender, target, like_amount, old_popularity, popularity)
+      print("gained " .. like_amount .. " like: " .. sender.id .. "->" .. target.amount .. " popularity: " .. old_popularity .. "->" .. popularity)
+    end,
+
+    on_set_expectation = function (agent, expectation)
+      print("set expectation:", agent.id, expectation)
+    end
   })
 
   msg.post("interruption#label", "disable")
