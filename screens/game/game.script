@@ -1,24 +1,27 @@
 local hangout = require "lib.hangout"
+local npcs = require "lib.data.npcs"
+local levels = require "lib.data.levels"
+local conversation = require "lib.conversation"
 
 function init(self)
   local player = hangout.init_agent({ id = "player" })
   self.player = player
-  player.popularity = 0
+  player.popularity = levels.player_start_popularity
 
-  local agents = {
-    player,
-    hangout.init_ai_agent({ id = "alice" }),
-    hangout.init_ai_agent({ id = "bob" }),
-    hangout.init_ai_agent({ id = "catlyn" }),
-    hangout.init_ai_agent({ id = "doug" }),
-  }
+  local level = levels.levels[1]
+  local agents = hangout.load_agents_from_level(player, level, npcs)
+
+  self.conversation = conversation.init()
 
   self.controller = hangout.init_controller(agents, {
+    duration = level.duration,
+
     on_change_topic = function (topic)
       if topic ~= nil then
-        label.set_text("dialogue#text", topic.speaker.id .. ": " .. topic.dialogue)
+        local text = self.conversation.get_next_line(topic.action)
+        label.set_text("dialogue#text", topic.speaker.id .. ": " .. text)
         label.set_text("dialogue#action", topic.action)
-        print("topic change: ", topic.speaker.id, topic.dialogue)
+        print("topic change: ", topic.speaker.id, text)
       else
         label.set_text("dialogue#text", "")
         label.set_text("dialogue#action", "")

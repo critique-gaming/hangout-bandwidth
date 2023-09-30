@@ -1,3 +1,5 @@
+local table_util = require "crit.table_util"
+
 local M = {}
 
 function M.init_agent(options)
@@ -26,7 +28,7 @@ function M.init_agent(options)
   return self
 end
 
-function M.init_ai_agent(options)
+function M.init_npc_agent(options)
   local self = M.init_agent(options)
 
   self.p_deny_interruptions = 0.5
@@ -69,7 +71,6 @@ function M.init_ai_agent(options)
     if self.controller.can_deny_interruption() then
       if math.random() < self.p_deny_interruptions then
         interruption_deny_elapsed = time_left * 0.5
-        print("AI decided to deny interrupt")
       end
     end
   end
@@ -102,7 +103,8 @@ function M.init_controller(agents, options)
     current_topic = topic
     time_remaining = topic.duration
 
-    self.on_change_topic(topic)
+    topic.duration = self.on_change_topic(topic) or topic.duration
+    time_remaining = topic.duration
 
     for _, agent in ipairs(agents) do
       agent.topic_started(topic)
@@ -166,14 +168,10 @@ function M.init_controller(agents, options)
       return
     end
 
-    local dialogue = "I'm gonna say something something " .. math.random(1, 100)
-    local duration = 5
-
     local topic = {
       speaker = agent,
-      dialogue = dialogue,
       action = action,
-      duration = duration,
+      duration = 5,
     }
 
     if current_topic == nil then
@@ -228,6 +226,14 @@ function M.init_controller(agents, options)
   end
 
   return self
+end
+
+function M.load_agents_from_level(player, level, npcs)
+  local agents = { player }
+  for _, agent_id in ipairs(level.npcs) do
+    agents[#agents+1] = M.init_npc_agent(table_util.clone(npcs[agent_id]))
+  end
+  return agents
 end
 
 return M
