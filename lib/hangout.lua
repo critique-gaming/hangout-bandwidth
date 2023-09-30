@@ -66,6 +66,10 @@ function M.init_npc_agent(options)
   end
 
   local function set_expectation(expectation)
+    if expectation == self.expectation then
+      return
+    end
+
     self.expectation = expectation
 
     local reported_expectation = expectation
@@ -92,15 +96,17 @@ function M.init_npc_agent(options)
       return
     end
 
-    if pending_expectation_like ~= 0 then
-      if math.random() < from_pes(self.pes_expectation_like, dt) then
-        pending_expectation_like = 0
-        self.controller.give_like(self, pending_expectation_like_target, pending_expectation_like)
-      end
-    elseif self.expectation == nil then
-      if math.random() < from_pes(self.pes_expectation, dt) then
-        local new_expectation = all_actions[math.random(#all_actions)]
-        set_expectation(new_expectation)
+    if current_topic ~= nil then
+      if pending_expectation_like ~= 0 then
+        if math.random() < from_pes(self.pes_expectation_like, dt) then
+          self.controller.give_like(self, pending_expectation_like_target, pending_expectation_like)
+          pending_expectation_like = 0
+        end
+      elseif self.expectation == nil then
+        if math.random() < from_pes(self.pes_expectation, dt) then
+          local new_expectation = all_actions[math.random(#all_actions)]
+          set_expectation(new_expectation)
+        end
       end
     end
 
@@ -131,13 +137,14 @@ function M.init_npc_agent(options)
   end
 
   function self.topic_started(topic)
-    if self.expectation then
+    if topic.speaker ~= self and self.expectation then
       pending_expectation_like = topic.action == self.expectation and 1 or -1
       pending_expectation_like_target = topic.speaker
     else
       pending_expectation_like = 0
       pending_expectation_like_target = nil
     end
+    set_expectation(nil)
   end
 
   return self
@@ -163,6 +170,8 @@ function M.init_controller(agents, options)
   self.on_change_topic = self.on_change_topic or function (_topic) end
   self.on_gain_like = self.on_gain_like or function (_sender, _target, _like_amount, _old_popularity, _new_popularity) end
   self.on_set_expectation = self.on_set_expectation or function (_agent, _expectation) end
+  self.on_duration_expired = self.on_duration_expired or function () end
+  self.on_game_over = self.on_game_over or function () end
 
   local function start_speaking(topic)
     current_topic = topic
@@ -194,10 +203,22 @@ function M.init_controller(agents, options)
 
   local function topic_finished()
     current_topic = nil
-    self.on_change_topic()
+
+    if self.duration and self.duration <= 0 then
+      self.on_game_over()
+    else
+      self.on_change_topic()
+    end
   end
 
   function self.update(dt)
+    if self.duration then
+      self.duration = self.duration - dt
+      if self.duration <= 0 then
+        self.on_duration_expired()
+      end
+    end
+
     if pending_topic ~= nil then
       if pending_interruption_remaining <= dt then
         accept_interruption()
@@ -280,6 +301,10 @@ function M.init_controller(agents, options)
     end
 
     if current_topic ~= nil and current_topic.speaker == agent then
+      return false
+    end
+
+    if self.duration and self.duration <= 0 then
       return false
     end
 
