@@ -51,7 +51,7 @@ local button_size_y = 70
 
 function init(self)
   self.sub_id = dispatcher.subscribe({
-    h_window_change_size
+    h_window_change_size, h_choose_buttons_show
   })
 
   self.root = gui.get_node("root")
@@ -86,20 +86,17 @@ function init(self)
   end
 
   gui.set_enabled(self.button_container, false)
-
-  timer.delay(4.0, true, function()
-    show(self, true)
-  end)
-  timer.delay(2.0, false, function()
-    timer.delay(4.0, true, function()
-      show(self, false)
-    end)
-  end)
+  self.shown = false
 
   msg.post(".", h_acquire_input_focus)
 end
 
 function show(self, shown)
+  if shown == self.shown then
+    return
+  end
+  self.shown = shown
+
   local shown_pos = vmath.vector3(
     self.button_container_pos.x,
     self.button_container_pos.y,

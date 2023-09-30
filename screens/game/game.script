@@ -2,6 +2,9 @@ local hangout = require "lib.hangout"
 local npcs = require "lib.data.npcs"
 local levels = require "lib.data.levels"
 local conversation = require "lib.conversation"
+local dispatcher = require "crit.dispatcher"
+
+local h_choose_buttons_show = hash("choose_buttons_show")
 
 function init(self)
   local player = hangout.init_agent({ id = "player" })
@@ -27,6 +30,11 @@ function init(self)
         label.set_text("dialogue#action", "")
         print("topic ended")
       end
+      if topic and topic.speaker == player then
+        dispatcher.dispatch(h_choose_buttons_show, { show = false })
+      else
+        dispatcher.dispatch(h_choose_buttons_show, { show = true })
+      end
     end,
 
     on_interruption_accepted = function (new_topic, old_topic)
@@ -46,7 +54,7 @@ function init(self)
     end,
 
     on_gain_like = function (sender, target, like_amount, old_popularity, popularity)
-      print("gained " .. like_amount .. " like: " .. sender.id .. "->" .. target.amount .. " popularity: " .. old_popularity .. "->" .. popularity)
+      print("gained " .. like_amount .. " like: " .. sender.id .. "->" .. target.id .. " popularity: " .. old_popularity .. "->" .. popularity)
     end,
 
     on_set_expectation = function (agent, expectation)
