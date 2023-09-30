@@ -28,6 +28,12 @@ function M.init_agent(options)
   return self
 end
 
+local function from_pes(pes, dt)
+  return 1 - math.pow(1 - pes, dt)
+end
+
+local all_actions = { "yes", "no", "more", "change" }
+
 function M.init_npc_agent(options)
   local self = M.init_agent(options)
 
@@ -40,13 +46,36 @@ function M.init_npc_agent(options)
   self.p_popularity_lying = 0.2
   self.pes_expectation = 0.05
   self.p_hide_expectation = 0.5
+  self.pes_expectation_like = 0.3
 
   local interruption_deny_elapsed = -1
   local pending_expectation_like = 0
   local pending_expectation_like_target = nil
 
   local function get_action()
-    return 'change'
+    if math.random() < self.p_popularity_lying then
+      -- TODO
+      return all_actions[math.random(#all_actions)]
+    end
+
+    if self.expectation then
+        return self.expectation
+    end
+
+    return all_actions[math.random(#all_actions)]
+  end
+
+  local function set_expectation(expectation)
+    self.expectation = expectation
+
+    local reported_expectation = expectation
+    if expectation then
+      if math.random() < self.p_hide_expectation then
+        reported_expectation = "hidden"
+      end
+    end
+
+    self.controller.on_set_expectation(self, reported_expectation)
   end
 
   function self.update(dt)
@@ -63,11 +92,22 @@ function M.init_npc_agent(options)
       return
     end
 
+    if pending_expectation_like ~= 0 then
+      if math.random() < from_pes(self.pes_expectation_like, dt) then
+        pending_expectation_like = 0
+        self.controller.give_like(self, pending_expectation_like_target, pending_expectation_like)
+      end
+    elseif self.expectation == nil then
+      if math.random() < from_pes(self.pes_expectation, dt) then
+        local new_expectation = all_actions[math.random(#all_actions)]
+        set_expectation(new_expectation)
+      end
+    end
+
     local probability_every_second = math.pow(1 - topic_progress, self.patience)
       * (self.pes_interrupt_topic_end - self.pes_interrupt_topic_start)
       + self.pes_interrupt_topic_start
-
-    local probability = 1 - math.pow(1 - probability_every_second, dt)
+    local probability = from_pes(probability_every_second, dt)
 
     if math.random() < probability then
       self.controller.try_speaking(self, get_action())
@@ -88,19 +128,6 @@ function M.init_npc_agent(options)
     if math.random() < p_dislike_interrupt then
       self.controller.give_like(self, interruptee, -1)
     end
-  end
-
-  local function set_expectation(expectation)
-    self.expectation = expectation
-
-    local reported_expectation = expectation
-    if expectation then
-      if math.random() < self.p_hide_expectation then
-        reported_expectation = "hidden"
-      end
-    end
-
-    self.controller.on_set_expectation(self, reported_expectation)
   end
 
   function self.topic_started(topic)
