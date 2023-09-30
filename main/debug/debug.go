@@ -23,6 +23,7 @@ embedded_components {
   type: "collectionfactory"
   data: "prototype: \"/main/debug/debug.collection\"\n"
   "load_dynamically: true\n"
+  "dynamic_prototype: false\n"
   ""
   position {
     x: 0.0
