@@ -8,7 +8,10 @@ local function nullify(x)
 end
 
 local function load()
-  local csv_file = csv.openstring(sys.load_resource("/data/batches.csv"), {
+  local csv_file
+  local csv_data = {}
+
+  csv_file = csv.openstring(sys.load_resource("/data/batches.csv"), {
     columns = {
       weight = { name = "Weight", transform = tonumber },
       statement = { name = "Initial Statement" },
@@ -24,7 +27,6 @@ local function load()
     }
   })
 
-  local csv_data = {}
   local topics = {}
   csv_data.topics = topics
 
@@ -46,6 +48,8 @@ local function load()
     topics[index] = v
     index = index + 1
   end
+
+  csv_file:close()
 
   return csv_data
 end
