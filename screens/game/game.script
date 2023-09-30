@@ -5,6 +5,12 @@ local conversation = require "lib.conversation"
 local dispatcher = require "crit.dispatcher"
 
 local h_choose_buttons_show = hash("choose_buttons_show")
+local h__script = hash("/script")
+local h_character_set_string_id = hash("character_set_string_id")
+local h__root = hash("/root")
+local h_script = hash("script")
+
+local spawn_character
 
 function init(self)
   local player = hangout.init_agent({ id = "player" })
@@ -15,6 +21,17 @@ function init(self)
   local agents = hangout.load_agents_from_level(player, level, npcs)
 
   self.conversation = conversation.init()
+
+  self.character_factory = msg.url("character_factory#collectionfactory")
+
+  self.characters = {}
+  for i, agent in ipairs(agents) do
+    if agent ~= player then
+      local character_instance = spawn_character(self, agent.id)
+      agent.go = character_instance
+    end
+  end
+
 
   self.controller = hangout.init_controller(agents, {
     duration = level.duration,
@@ -88,6 +105,30 @@ function on_input(self, action_id, action)
       self.controller.deny_interruption()
     end
   end
+end
+
+function spawn_character(self, agent_id)
+  if not agent_id then
+    return
+  end
+
+  local props = {
+    [h__script] = {
+      agent_id = hash(agent_id),
+    }
+  }
+
+  local position = vmath.vector3(
+    math.random(200, 1720),
+    math.random(200, 800),
+    0.0
+  )
+
+  local character = collectionfactory.create(self.character_factory, position, vmath.quat(), props, vmath.vector3(1.0))
+  local character_url = msg.url(nil, character[h__root], h_script)
+  msg.post(character_url, h_character_set_string_id, { id = agent_id })
+
+  return character
 end
 
 function update(self, dt)

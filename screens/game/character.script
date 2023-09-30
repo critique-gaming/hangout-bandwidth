@@ -1,0 +1,128 @@
+local dispatcher = require "crit.dispatcher"
+local util = require "lib.util"
+
+local h_character_set_state = hash("character_set_state")
+local h_scale = hash("scale")
+local h_character_set_string_id = hash("character_set_string_id")
+local h_enable = hash("enable")
+local h_disable = hash("disable")
+
+local STATE_IDLE = 1
+local STATE_TALKING = 2
+local STATE_WALKING = 3
+local STATE_INTERRUPTING = 4
+
+local state_idle = "idle"
+local state_talking = "talk"
+local state_walking = "walk"
+local state_interrupting = "interrupt"
+
+local states = {
+  [STATE_IDLE] = {
+    name = state_idle,
+    flipbook = "_idle",
+  },
+  [STATE_TALKING] = {
+    name = state_talking,
+    flipbook = "_speak",
+  },
+  [STATE_WALKING] = {
+    name = state_walking,
+    flipbook = "_walk",
+  },
+  [STATE_INTERRUPTING] = {
+    name = state_interrupting,
+    flipbook = "_idle",
+  }
+}
+
+local set_state
+local on_state_change
+local show_bubble
+local show_expectation
+
+go.property("agent_id", hash(""))
+go.property("scale", 0.75)
+
+function init(self)
+  --self.sub_id = dispatcher.subscribe({})
+
+  self.state_name_to_id = {}
+  for id, state in ipairs(states) do
+    self.state_name_to_id[state.name] = id
+  end
+
+  self.root = msg.url("root")
+  self.go = msg.url("character")
+  self.sprite = msg.url("character#sprite")
+
+  self.bubble_root_go = msg.url("bubble_root")
+  self.bubble_go = msg.url("bubble")
+  self.bubble_sprite = msg.url("bubble#sprite")
+  self.bubble_label = msg.url("bubble#label")
+
+  self.expectation_go = msg.url("expectation")
+  self.expectation_sprite = msg.url("expectation#sprite")
+
+  self.popularity_go = msg.url("popularity")
+  self.popularity_fill = msg.url("popularity#fill")
+  self.popularity_background = msg.url("popularity#background")
+
+  self.string_id = ""
+
+  -- set up initial state
+  go.set(self.go, h_scale, self.scale)
+  self.state = STATE_IDLE
+  show_bubble(self)
+  show_expectation(self)
+
+
+  local debug_state_index = 1
+  timer.delay(2.0, true, function ()
+    debug_state_index = debug_state_index + 1
+    if debug_state_index > #states then
+      debug_state_index = 1
+    end
+    set_state(self, states[debug_state_index].name)
+  end)
+end
+
+function set_state(self, state)
+  if state and self.state_name_to_id[state] then
+    local old_state = self.state
+    self.state = self.state_name_to_id[state]
+    on_state_change(self, old_state)
+  end
+end
+
+function on_state_change(self, old_state)
+  local animation_id = hash("character_" .. self.string_id .. states[self.state].flipbook)
+  animation_id = hash("character_test_idle")
+  -- local default_animation_id = hash("character_" .. self.string_id .. states[STATE_IDLE].flipbook)
+  sprite.play_flipbook(self.sprite, animation_id)
+end
+
+function show_bubble(self, text)
+  if text then
+    msg.post(self.bubble_go, h_enable)
+    label.set_text(self.bubble_label, text)
+  else
+    msg.post(self.bubble_go, h_disable)
+  end
+end
+
+function show_expectation(self, expectation)
+  msg.post(self.expectation_go, expectation and h_enable or h_disable)
+end
+
+function final(self)
+  --dispatcher.unsubscribe(self.sub_id)
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == h_character_set_state then
+    set_state(self, message.state)
+  elseif message_id == h_character_set_string_id then
+    self.string_id = message.id
+  end
+end

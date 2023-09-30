@@ -13,6 +13,17 @@ function M.try_play_flipbook(node, animation, default_animation)
   end
 end
 
+function M.sprite_try_play_flipbook(sprite_url, animation, default_animation)
+  local ok = pcall(function ()
+    sprite.play_flipbook(sprite_url, animation)
+  end)
+  if not ok then
+    pcall(function ()
+      sprite.play_flipbook(sprite_url, default_animation or h_pixel)
+    end)
+  end
+end
+
 function M.scale_value(x, min, max, newmin, newmax)
   return newmax + (newmax - newmin) / (max - min) * (x - max)
 end
