@@ -85,12 +85,13 @@ function init(self)
     self.buttons[i] = button
   end
 
-  timer.delay(4.0, true, function ()
+  gui.set_enabled(self.button_container, false)
+
+  timer.delay(4.0, true, function()
     show(self, true)
   end)
-
   timer.delay(2.0, false, function()
-    timer.delay(4.0, true, function ()
+    timer.delay(4.0, true, function()
       show(self, false)
     end)
   end)
@@ -99,42 +100,43 @@ function init(self)
 end
 
 function show(self, shown)
-  local position = vmath.vector3(
+  local shown_pos = vmath.vector3(
     self.button_container_pos.x,
     self.button_container_pos.y,
     self.button_container_pos.z
   )
-  print(self.button_container_pos)
+  local hidden_pos = vmath.vector3(
+    self.button_container_pos.x,
+    self.button_container_pos.y - 50,
+    self.button_container_pos.z
+  )
+  local position = shown_pos
   local delay = 0
   local easing = gui.EASING_OUTCUBIC
   local duration = 0.3
-  local button_color = colors.white
-
+  local button_shown_color = colors.white
+  local button_hidden_color = colors.white
+  local button_color = button_shown_color
 
   if shown then
-    --gui.set_enabled(self.container, true)
-    print(shown)
+    gui.set_enabled(self.button_container, true)
   else
-    print(shown)
-    position.y = position.y - 50
+    position = hidden_pos
     delay = 0.3
     duration = 0.6
     button_color = colors.transparent_white
   end
 
+  gui.set_position(self.button_container, shown and hidden_pos or shown_pos)
+
   gui.animate(self.button_container, gui.PROP_POSITION, position, easing, duration, delay, function ()
-   -- gui.set_enabled(self.container, false)
+    gui.set_enabled(self.button_container, shown)
   end)
 
   for i, button in ipairs(self.buttons) do
-    --if shown then
-      button.set_enabled(shown)
-    --end
-    gui.animate(button.nodes.root, gui.PROP_COLOR, button_color, gui.EASING_LINEAR, duration, delay, function ()
-      if not shown then
-        -- button.set_enabled(false)
-      end
-    end)
+    button.set_enabled(shown)
+    gui.set_color(button.nodes.root, shown and button_shown_color or button_hidden_color)
+    gui.animate(button.nodes.root, gui.PROP_COLOR, button_color, gui.EASING_LINEAR, duration, delay)
   end
 
 end
