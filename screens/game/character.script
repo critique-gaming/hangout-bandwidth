@@ -228,6 +228,10 @@ function show_bubble(self, text, action)
   go.cancel_animations(self.bubble_sprite, h_tint_w)
 
   if text and text ~= "" then
+    if text ~= "" then
+      local sound_url = msg.url("mumbles" .. "#sound" ..math.random(1, 16))
+      sound.play(sound_url)
+    end
     set_state(self, STATE_TALKING)
     label.set_text(self.bubble_label, text)
     go.animate(self.bubble_label, h_color_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
