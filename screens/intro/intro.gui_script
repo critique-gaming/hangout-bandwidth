@@ -1,0 +1,37 @@
+local colors = require "lib.colors"
+local dispatcher = require "crit.dispatcher"
+local button_rect = require "screens.ui.button_rect_choose"
+
+local h_advance_scene = hash("advance_scene")
+local h_key_space = hash("key_space")
+local h_acquire_input_focus = hash("acquire_input_focus")
+
+function init(self)
+  local button_template = gui.get_node("button_rect/button")
+  gui.set_enabled(button_template, false)
+
+  self.button = button_rect.make_button(button_template, {
+    text = "Start game",
+    action_name = "yes",
+    color = colors.white,
+    action = function ()
+      dispatcher.dispatch(h_advance_scene)
+    end,
+    button_opts = {
+      shortcut_actions = {
+        h_key_space
+      }
+    },
+    size_x = 260,
+    size_y = 70,
+    scale = 1.5,
+  })
+
+  msg.post(".", h_acquire_input_focus)
+end
+
+function on_input(self, action_id, action)
+  if self.button.on_input(action_id, action) then
+    return true
+  end
+end
