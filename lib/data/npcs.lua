@@ -17,9 +17,9 @@ local M = {
   deer4 = { extends = "deer" },
 
   fox = { -- The asshole
-    popularity = 0.5,
+    popularity = 0.6,
     p_deny_interruptions = 0.8,
-    pes_interrupt_topic_end = 0.4,
+    pes_interrupt_topic_end = 0.5,
     pes_interrupt_topic_start = 0.08,
     patience = 3,
     pes_expectation = 0.2,

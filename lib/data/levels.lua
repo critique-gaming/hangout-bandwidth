@@ -1,7 +1,7 @@
 return {
-  player_start_popularity = 0.45,
+  player_start_popularity = 0.2,
   levels = {{ --the first one
-    npcs = { "fox1", "deer1", "deer2" },
+    npcs = { "deer1", "deer2" },
     duration = 100,
   }, {--the second one
     npcs = { "deer1", "deer2", "fox1" },
