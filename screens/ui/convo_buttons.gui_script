@@ -23,7 +23,7 @@ local show
 
 local button_defs = {
   [1] = {
-    text = "Accept [Y]",
+    text = "Agree [Y]",
     action_name = "yes",
     color = colors.white,
     action = function ()
