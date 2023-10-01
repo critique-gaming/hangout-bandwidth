@@ -1,6 +1,8 @@
 local Button = require "crit.button"
 local colors = require "lib.colors"
 local util = require "lib.util"
+local table_util = require "crit.table_util"
+
 -- C:\Users\Cata\AppData\Local\Programs\Microsoft VS Code\Code.exe
 local h__button_rect = hash("button_rect/button")
 local h__button_rect_label = hash("button_rect/label")
@@ -186,7 +188,7 @@ function button_rect.make_button(template_node, opts)
   }
 
   local button
-  button = Button.new(node_hitbox, {
+  button = Button.new(node_hitbox, table_util.assign({
     on_state_change = opts.override_on_state_change and
       { opts.override_on_state_change } or default_on_state_change,
     action = function ()
@@ -195,7 +197,7 @@ function button_rect.make_button(template_node, opts)
     background_images = background_images,
     nodes = button_nodes,
     background_size = size,
-  })
+  }, opts.button_opts))
 
   if opts.pick then
     button.pick = opts.pick

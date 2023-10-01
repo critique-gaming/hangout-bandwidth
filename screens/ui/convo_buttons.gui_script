@@ -2,11 +2,17 @@ local dispatcher = require "crit.dispatcher"
 local Layout = require "crit.layout"
 local button_rect = require "screens.ui.button_rect_choose"
 local colors = require "lib.colors"
+local game = require "screens.game.game"
 
 local h_window_change_size = hash("window_change_size")
 local h_acquire_input_focus = hash("acquire_input_focus")
 local h_action_choose = hash("action_choose")
 local h_choose_buttons_show = hash("choose_buttons_show")
+local h_key_y = hash("key_y")
+local h_key_m = hash("key_m")
+local h_key_n = hash("key_n")
+local h_key_c = hash("key_c")
+local h_level_timed_out = hash("level_timed_out")
 
 local show
 
@@ -18,6 +24,11 @@ local button_defs = {
     action = function ()
       dispatcher.dispatch(h_action_choose, { action = "yes" })
     end,
+    button_opts = {
+      shortcut_actions = {
+        h_key_y
+      }
+    },
   },
   [2] = {
     text = "Contradict",
@@ -26,6 +37,11 @@ local button_defs = {
     action = function ()
       dispatcher.dispatch(h_action_choose, { action = "no" })
     end,
+    button_opts = {
+      shortcut_actions = {
+        h_key_n
+      }
+    },
   },
 
   [3] = {
@@ -35,6 +51,11 @@ local button_defs = {
     action = function ()
       dispatcher.dispatch(h_action_choose, { action = "more" })
     end,
+    button_opts = {
+      shortcut_actions = {
+        h_key_m
+      }
+    },
   },
 
   [4] = {
@@ -44,6 +65,11 @@ local button_defs = {
     action = function ()
       dispatcher.dispatch(h_action_choose, { action = "change" })
     end,
+    button_opts = {
+      shortcut_actions = {
+        h_key_c
+      }
+    },
   },
 }
 local button_size_x = 210
@@ -51,18 +77,22 @@ local button_size_y = 70
 
 function init(self)
   self.sub_id = dispatcher.subscribe({
-    h_window_change_size, h_choose_buttons_show
+    h_window_change_size, h_choose_buttons_show,
+    h_level_timed_out
   })
 
   self.root = gui.get_node("root")
   self.container = gui.get_node("container")
+  self.timer = gui.get_node("timer")
+  self.game_over = gui.get_node("game_over")
   self.button_container = gui.get_node("button_container")
   self.button_container_pos = gui.get_position(self.button_container)
   self.button_container_size = gui.get_size(self.button_container)
 
   self.layout = Layout.new()
   self.layout.add_node(self.root)
-  self.layout.add_node(self.container)
+  self.layout.add_node(self.container, { grav_x = 0.5, grav_y = 1 })
+  self.layout.add_node(self.timer, { grav_x = 0, grav_y = 1 })
 
   self.button_template = gui.get_node("button_rect/button")
   self.button_template_orig_pos = gui.get_position(self.button_template)
@@ -87,6 +117,9 @@ function init(self)
 
   gui.set_enabled(self.button_container, false)
   self.shown = false
+
+  gui.set_enabled(self.timer, false)
+  gui.set_enabled(self.game_over, false)
 
   msg.post(".", h_acquire_input_focus)
 end
@@ -143,13 +176,21 @@ function final(self)
 end
 
 function update(self, dt)
-
+  local duration = game.controller and game.controller.duration or 0
+  gui.set_enabled(self.timer, duration > 0)
+  gui.set_text(self.timer, tostring(math.ceil(duration)))
 end
 
 function on_message(self, message_id, message, sender)
   if message_id == h_window_change_size then
     self.layout.place()
   elseif message_id == h_choose_buttons_show then
+    show(self, message.show)
+  elseif message_id == h_level_timed_out then
+    gui.set_enabled(self.game_over, true)
+    gui.set_alpha(self.game_over, 0)
+    gui.animate(self.game_over, "color.w", 1, gui.EASING_LINEAR, 0.5, 1.0)
+    gui.set_enabled(self.game_over, true)
     show(self, message.show)
   end
 end

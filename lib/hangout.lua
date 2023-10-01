@@ -116,7 +116,7 @@ function M.init_npc_agent(options)
       end
     end
 
-    self.controller.on_set_expectation(self, reported_expectation)
+    self.controller.on_set_expectation(self, reported_expectation, expectation)
   end
 
   function self.update(dt)
@@ -273,7 +273,8 @@ function M.init_controller(agents, options)
   function self.update(dt)
     if self.duration then
       self.duration = self.duration - dt
-      if self.duration <= 0 then
+      if self.duration <= 0 and not self.expired_fired then
+        self.expired_fired = true
         self.on_duration_expired()
       end
     end
