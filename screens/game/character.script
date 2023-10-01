@@ -1,11 +1,15 @@
 local dispatcher = require "crit.dispatcher"
 local util = require "lib.util"
 
-local h_character_set_state = hash("character_set_state")
 local h_scale = hash("scale")
-local h_character_set_string_id = hash("character_set_string_id")
 local h_enable = hash("enable")
 local h_disable = hash("disable")
+local h_set_string_id = hash("set_string_id")
+local h_set_state = hash("set_state")
+local h_set_popularity = hash("set_popularity")
+local h_position = hash("position")
+local h_default = hash("default")
+local h_contact_point_response = hash("contact_point_response")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -36,13 +40,25 @@ local states = {
   }
 }
 
+local collision_groups = {
+  [h_default] = true;
+}
+
 local set_state
 local on_state_change
 local show_bubble
 local show_expectation
+local get_speed
+local get_new_wander_position
 
 go.property("agent_id", hash(""))
 go.property("scale", 0.75)
+go.property("z", 0.0)
+go.property("movement_speed", 50)
+go.property("screen_limits_x", vmath.vector3(300, 1620, 0.0))
+go.property("screen_limits_y", vmath.vector3(100, 780, 0.0))
+go.property("wander_min_radius", 20)
+go.property("wander_max_radius", 60)
 
 function init(self)
   --self.sub_id = dispatcher.subscribe({})
@@ -75,7 +91,11 @@ function init(self)
   self.state = STATE_IDLE
   show_bubble(self)
   show_expectation(self)
-
+  self.hflip = false
+  self.position = go.get(self.root, h_position)
+  self.speed = vmath.vector3(0.0)
+  self.wander_position = vmath.vector3(0.0)
+  self.wander_start_position = go.get(self.root, h_position)
 
   local debug_state_index = 1
   timer.delay(2.0, true, function ()
@@ -87,19 +107,41 @@ function init(self)
   end)
 end
 
-function set_state(self, state)
-  if state and self.state_name_to_id[state] then
+function set_state(self, state_name)
+  if not state_name or not self.state_name_to_id[state_name] then
+    return
+  end
+  local state = self.state_name_to_id[state_name]
+  if state ~= self.state then
     local old_state = self.state
-    self.state = self.state_name_to_id[state]
+    self.state = state
     on_state_change(self, old_state)
   end
 end
 
 function on_state_change(self, old_state)
+  local state = self.state
   local animation_id = hash("character_" .. self.string_id .. states[self.state].flipbook)
   animation_id = hash("character_test_idle")
   -- local default_animation_id = hash("character_" .. self.string_id .. states[STATE_IDLE].flipbook)
   sprite.play_flipbook(self.sprite, animation_id)
+
+  if (state == STATE_WALKING) then
+    self.wander_position = get_new_wander_position(self)
+  end
+
+end
+
+function get_new_wander_position(self)
+  local rand = self.wander_min_radius + math.random() * (self.wander_max_radius - self.wander_min_radius)
+  local r = self.wander_max_radius * math.sqrt(rand)
+  local theta = math.random() * 2.0 * math.pi
+  local x = r * math.cos(theta)
+  local y = r * math.sin(theta)
+  print(x, y)
+  x = x + self.position.x
+  y = y + self.position.y
+  return vmath.vector3(x, y, 0)
 end
 
 function show_bubble(self, text)
@@ -111,6 +153,55 @@ function show_bubble(self, text)
   end
 end
 
+function get_speed(self, dt)
+  local speed = vmath.vector3(0.0)
+  if self.state == STATE_WALKING then
+    self.wander_start_position = go.get(self.root, h_position)
+    speed = vmath.normalize(self.wander_start_position - self.wander_position) * self.movement_speed * dt
+    --speed = vmath.vector3(self.movement_speed * dt, self.movement_speed * dt, 0.0)
+  end
+  -- dt = dt * 60.0
+  return speed
+end
+
+local function animate(self, hflip)
+  -- local this_sprite = self.sprite
+
+  if hflip ~= self.hflip then
+    sprite.set_hflip(self.sprite, hflip)
+  end
+end
+
+function update(self, dt)
+  -- reset accumulated collision deltas
+  self.hitbox_correction = vmath.vector3(0.0)
+
+  local speed = get_speed(self, dt)
+  local horizontal_flip = speed.x > 0 and true or false
+
+  local new_position = vmath.vector3(
+    self.position.x + speed.x,
+    self.position.y + speed.y,
+    self.z
+  )
+
+  self.position = new_position
+  self.position = util.clamp_vector(
+    self.position,
+    self.screen_limits_x.x,
+    self.screen_limits_x.y,
+    self.screen_limits_y.x,
+    self.screen_limits_y.y,
+    0.0,
+    0.0
+  )
+
+  go.set(self.root, h_position, self.position)
+  animate(self, horizontal_flip)
+
+  self.speed = speed
+end
+
 function show_expectation(self, expectation)
   msg.post(self.expectation_go, expectation and h_enable or h_disable)
 end
@@ -120,9 +211,32 @@ function final(self)
 end
 
 function on_message(self, message_id, message, sender)
-  if message_id == h_character_set_state then
+  if message_id == h_contact_point_response then
+    local position = self.position
+    local response = message
+
+    if collision_groups[response.group] then
+      local penetration = response.distance
+      if penetration > 0 then
+        local normal = response.normal
+        local projection  = vmath.project(self.hitbox_correction, normal * penetration)
+        if projection < 1 then
+          local comp = (penetration - penetration * projection) * normal
+          local old_pos = vmath.vector3(position.x, position.y, 0.0)
+          local new_pos = old_pos + comp
+
+          self.position = vmath.vector3(new_pos.x, new_pos.y, self.z)
+          go.set(self.root, h_position, position)
+          self.hitbox_correction = self.hitbox_correction + comp
+        end
+      end
+    end
+
+  elseif message_id == h_set_state then
     set_state(self, message.state)
-  elseif message_id == h_character_set_string_id then
+  elseif message_id == h_set_string_id then
     self.string_id = message.id
+  elseif message_id == h_set_popularity then
+    self.popularity = message.popularity
   end
 end

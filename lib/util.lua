@@ -24,7 +24,7 @@ function M.sprite_try_play_flipbook(sprite_url, animation, default_animation)
   end
 end
 
-function M.scale_value(x, min, max, newmin, newmax)
+function M.remap_value(x, min, max, newmin, newmax)
   return newmax + (newmax - newmin) / (max - min) * (x - max)
 end
 
@@ -33,6 +33,18 @@ function M.get_bar_fill(value, original_size, min_fill)
     M.scale_value(value, 0, 1, min_fill, original_size.x),
     original_size.y,
     original_size.z
+  )
+end
+
+function M.clamp(value, min, max)
+  return math.max(math.min(value, max), min)
+end
+
+function M.clamp_vector(vec, minx, maxx, miny, maxy, minz, maxz)
+  return vmath.vector3(
+    M.clamp(vec.x, minx, maxx),
+    M.clamp(vec.y, miny, maxy),
+    M.clamp(vec.z, minz, maxz)
   )
 end
 
