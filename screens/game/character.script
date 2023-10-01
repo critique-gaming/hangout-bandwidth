@@ -117,7 +117,6 @@ function init(self)
 
   -- set up initial state
   go.set(self.go, h_scale, self.scale)
-  self.state = STATE_IDLE
   show_expectation(self)
   self.hflip = false
   self.position = go.get(self.root, h_position)
@@ -403,10 +402,11 @@ function on_message(self, message_id, message, sender)
     set_state(self, message.state)
   elseif message_id == h_set_string_id then
     self.string_id = message.id
-    print(message.id)
     if message.id == "player" then
       show_player_indicator(self, true)
     end
+    set_state(self, STATE_IDLE)
+
   elseif message_id == h_set_popularity then
     set_popularity(self, message.popularity)
   elseif message_id == h_show_bubble then
