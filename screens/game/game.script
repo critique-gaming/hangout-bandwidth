@@ -1,8 +1,8 @@
 local hangout = require "lib.hangout"
 local npcs = require "lib.data.npcs"
 local levels = require "lib.data.levels"
-local conversation = require "lib.conversation"
 local dispatcher = require "crit.dispatcher"
+local game = require "screens.game.game"
 
 local h_choose_buttons_show = hash("choose_buttons_show")
 local h__script = hash("/script")
@@ -20,28 +20,25 @@ function init(self)
   local level = levels.levels[1]
   local agents = hangout.load_agents_from_level(player, level, npcs)
 
-  self.conversation = conversation.init()
-
   self.character_factory = msg.url("character_factory#collectionfactory")
 
   self.characters = {}
-  for i, agent in ipairs(agents) do
+  for _, agent in ipairs(agents) do
     if agent ~= player then
       local character_instance = spawn_character(self, agent.id)
       agent.go = character_instance
     end
   end
 
-
   self.controller = hangout.init_controller(agents, {
     duration = level.duration,
 
     on_change_topic = function (topic)
       if topic ~= nil then
-        local text = self.conversation.get_next_line(topic.action)
+        local text = game.conversation.get_next_line(topic.action)
         label.set_text("dialogue#text", topic.speaker.id .. ": " .. text)
         label.set_text("dialogue#action", topic.action)
-        print("topic change: ", topic.speaker.id, text)
+        print("topic start: ", topic.speaker.id, topic.action, text)
       else
         label.set_text("dialogue#text", "")
         label.set_text("dialogue#action", "")
@@ -76,7 +73,16 @@ function init(self)
 
     on_set_expectation = function (agent, expectation)
       print("set expectation:", agent.id, expectation)
-    end
+    end,
+
+    on_duration_expired = function ()
+      dispatcher.dispatch(h_choose_buttons_show, { show = false })
+      print("game time expired")
+    end,
+
+    on_game_over = function ()
+      print("game over")
+    end,
   })
 
   msg.post("interruption#label", "disable")

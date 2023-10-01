@@ -1,5 +1,56 @@
 local csv = require "lib.csv"
 
+local M = {
+  ask_for_more = {
+    "No way! For real?",
+    "Hmmm! That's actually quite interesting. Tell me more!",
+    "Curious mode activated! Tell me more!",
+    "Wait, back up! Can you explain that?",
+    "That's intriguing! What led to that?",
+    "Go on, you've piqued my interest!",
+    "Hold on, can you dive a bit deeper into that?",
+    "How did that come about?",
+    "I'd love to hear a bit more about that!",
+    "Sounds like there's a story there. Care to share?",
+    "I'd love to understand the backstory to that.",
+    "This feels important. Can you walk me through your thinking?",
+    "I'd appreciate hearing more about the journey that led to that view.",
+    "That's intriguing. What sparked that thought?",
+    "I'd love to hear more. Can you dive deeper?",
+    "Thanks for sharing that. Why though?",
+  },
+  fallback_no_more = {
+    "Sorry, I phased out for a second and forgot what we were talking about.",
+    "Omg, slow down for a second, processing lag.",
+    "Idk honestly, haven't thought about it more than that.",
+    "It's quite self-evident at this point, isn't it?",
+    "I really don't see what more is to say about it.",
+    "Dig any deeper into it and we could write an essay.",
+    "I'm a bit bored. Anyone wanna order some pizza?",
+    "Damn, my phone ran out of battery! I hate when that happens.",
+    "Wow, doesn't this give you max deja vu?",
+    "Aaaaaand so the cookie crumbles.",
+    "Can-not com-pute. Out of me-mo-ry. Please in-sert new disk!",
+  },
+  fallback_yes = {
+    "Totally!",
+    "Fair enough!",
+    "Sounds bout right!",
+    "Hear hear!",
+    "Yep!",
+    "Word!",
+    "That's what I was saying!",
+  },
+  fallback_no = {
+    "Ain't that a bit much?",
+    "Idk, doesn't sound quite right to me!",
+    "Are you sure of that?",
+    "Hmmm",
+    "That's not what I was expecting to hear today!",
+    "Aaaaaakward!",
+  },
+}
+
 local function nullify(x)
   if x == "" then
     return nil
@@ -7,9 +58,8 @@ local function nullify(x)
   return x
 end
 
-local function load()
+local function load_topics()
   local csv_file
-  local csv_data = {}
 
   csv_file = csv.openstring(sys.load_resource("/data/batches.csv"), {
     columns = {
@@ -28,7 +78,6 @@ local function load()
   })
 
   local topics = {}
-  csv_data.topics = topics
 
   local index = 1
   for v in csv_file:lines() do
@@ -51,7 +100,9 @@ local function load()
 
   csv_file:close()
 
-  return csv_data
+  return topics
 end
 
-return load()
+M.topics = load_topics()
+
+return M

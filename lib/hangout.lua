@@ -25,6 +25,9 @@ function M.init_agent(options)
   function self.topic_started()
   end
 
+  function self.topic_finished()
+  end
+
   return self
 end
 
@@ -51,15 +54,49 @@ function M.init_npc_agent(options)
   local interruption_deny_elapsed = -1
   local pending_expectation_like = 0
   local pending_expectation_like_target = nil
+  local requested_more = false
+
+  local function meets_expectation(topic_action, expectation)
+    return topic_action == expectation or topic_action == "followup_more" and expectation == "more"
+  end
 
   local function get_action()
+    if self.controller.get_original_poster() == nil then
+      return "change"
+    end
+
     if math.random() < self.p_popularity_lying then
-      -- TODO
-      return all_actions[math.random(#all_actions)]
+      local max_popularity_gain = 0
+      local max_popularity_gain_action = nil
+
+      for _, action in ipairs(all_actions) do
+        local popularity_gain = 0
+
+        for _, agent in ipairs(self.controller.agents) do
+          if agent ~= self and agent.expectation ~= nil then
+            local like_amount = meets_expectation(action, agent.expectation) and 1 or -1
+            popularity_gain = popularity_gain
+              + like_amount * self.controller.popularity_bonus_per_like * agent.popularity
+          end
+        end
+
+        if popularity_gain > max_popularity_gain then
+          max_popularity_gain = popularity_gain
+          max_popularity_gain_action = action
+        end
+      end
+
+      if max_popularity_gain_action ~= nil then
+        return max_popularity_gain_action
+      end
     end
 
     if self.expectation then
         return self.expectation
+    end
+
+    if requested_more then
+      return "more"
     end
 
     return all_actions[math.random(#all_actions)]
@@ -138,30 +175,44 @@ function M.init_npc_agent(options)
 
   function self.topic_started(topic)
     if topic.speaker ~= self and self.expectation then
-      pending_expectation_like = topic.action == self.expectation and 1 or -1
+      pending_expectation_like = meets_expectation(topic.action, self.expectation) and 1 or -1
       pending_expectation_like_target = topic.speaker
     else
       pending_expectation_like = 0
       pending_expectation_like_target = nil
     end
     set_expectation(nil)
+
+    requested_more = self.controller.get_original_poster() == self
+      and topic.speaker ~= self
+      and topic.action == "more"
+  end
+
+  function self.topic_finished()
+    if requested_more then
+      self.controller.try_speaking(self, get_action())
+    end
   end
 
   return self
 end
 
 function M.init_controller(agents, options)
-  local pending_interruption_duration = 1.0
-  local denied_interrupt_bonus = 2.0
-  local popularity_bonus_per_like = 0.1
-
   local current_topic = nil
   local time_remaining = 0
 
   local pending_topic = nil
   local pending_interruption_remaining = 0
 
+  local original_poster = nil
+
   local self = options or {}
+
+  local pending_interruption_duration = 1.0
+  local denied_interrupt_bonus = 2.0
+  local default_topic_duration = 4
+  self.popularity_bonus_per_like = 0.1
+
   self.agents = agents
 
   self.on_interruption_requested = self.on_interruption_requested or function (_pending_topic, _old_topic) end
@@ -176,6 +227,10 @@ function M.init_controller(agents, options)
   local function start_speaking(topic)
     current_topic = topic
     time_remaining = topic.duration
+
+    if topic.action == "change" then
+      original_poster = topic.speaker
+    end
 
     topic.duration = self.on_change_topic(topic) or topic.duration
     time_remaining = topic.duration
@@ -202,11 +257,15 @@ function M.init_controller(agents, options)
   end
 
   local function topic_finished()
+    local topic = current_topic
     current_topic = nil
 
     if self.duration and self.duration <= 0 then
       self.on_game_over()
     else
+      for _, agent in ipairs(agents) do
+        agent.topic_finished(topic)
+      end
       self.on_change_topic()
     end
   end
@@ -254,10 +313,14 @@ function M.init_controller(agents, options)
       return
     end
 
+    if action == "more" and original_poster == agent then
+      action = "followup_more"
+    end
+
     local topic = {
       speaker = agent,
       action = action,
-      duration = 5,
+      duration = default_topic_duration,
     }
 
     if current_topic == nil then
@@ -312,10 +375,14 @@ function M.init_controller(agents, options)
   end
 
   function self.give_like(sender, target, like_amount)
-    local popularity_gain = popularity_bonus_per_like * like_amount * sender.popularity
+    local popularity_gain = self.popularity_bonus_per_like * like_amount * sender.popularity
     local old_popularity = target.popularity
     target.popularity = math.max(0, math.min(1, old_popularity + popularity_gain))
     self.on_gain_like(sender, target, like_amount, old_popularity, target.popularity)
+  end
+
+  function self.get_original_poster()
+    return original_poster
   end
 
   for _, agent in ipairs(agents) do
