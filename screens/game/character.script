@@ -19,6 +19,8 @@ local h_positiony = hash("position.y")
 local h_eulerz = hash("euler.z")
 local h_tint = hash("tint")
 local h_size = hash("size")
+local h_tint_w = hash("tint.w")
+local h_color_w = hash("color.w")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -87,6 +89,7 @@ function init(self)
   self.bubble_go = msg.url("bubble")
   self.bubble_sprite = msg.url("bubble#sprite")
   self.bubble_label = msg.url("bubble#label")
+  self.deny_sprite = msg.url("bubble#deny")
 
   self.expectation_go = msg.url("expectation")
   self.expectation_sprite = msg.url("expectation#sprite")
@@ -106,7 +109,6 @@ function init(self)
   -- set up initial state
   go.set(self.go, h_scale, self.scale)
   self.state = STATE_IDLE
-  show_bubble(self)
   show_expectation(self)
   self.hflip = false
   self.position = go.get(self.root, h_position)
@@ -114,8 +116,15 @@ function init(self)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
 
-
   set_popularity(self, math.random())
+
+  go.set_scale(vmath.vector3(0.01, 0.01, 1), self.bubble_go)
+  label.set_text(self.bubble_label, "")
+  go.set(self.bubble_label, h_color_w, 0)
+  go.set(self.bubble_sprite, h_tint_w, 0)
+  msg.post(self.bubble_go, h_disable)
+  self.bubble_shown = false
+
   local debug_state_index = 1
   timer.delay(2.0, true, function ()
     debug_state_index = debug_state_index + 1
@@ -195,12 +204,38 @@ local function simplify_action(action)
 end
 
 function show_bubble(self, text, action)
-  if text then
-    msg.post(self.bubble_go, h_enable)
+  go.cancel_animations(self.bubble_go, h_scale)
+  go.cancel_animations(self.bubble_label, h_color_w)
+  go.cancel_animations(self.bubble_sprite, h_tint_w)
+
+  if text and text ~= "" then
     label.set_text(self.bubble_label, text)
-    go.set(self.bubble_sprite, h_tint, colors.actions[simplify_action(action)])
+    go.animate(self.bubble_label, h_color_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
   else
-    msg.post(self.bubble_go, h_disable)
+    go.animate(self.bubble_label, h_color_w, go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_LINEAR, 0.3)
+  end
+
+  local shown = text ~= nil
+  if shown == self.bubble_shown then
+    return
+  end
+  self.bubble_shown = shown
+
+  if shown then
+    msg.post(self.bubble_go, h_enable)
+    msg.post(self.deny_sprite, h_disable)
+    local duration = text == "" and 1.0 or 0.3
+    local easing = text == "" and go.EASING_OUTEXPO or go.EASING_OUTBACK
+    go.animate(self.bubble_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), easing, duration)
+    go.animate(self.bubble_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    if action ~= nil then
+      go.set(self.bubble_sprite, h_tint, colors.actions[simplify_action(action)])
+    end
+  else
+    go.animate(self.bubble_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.bubble_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0.01, 0.01, 1.0), go.EASING_OUTEXPO, 0.3, 0.0, function ()
+      msg.post(self.bubble_go, h_disable)
+    end)
   end
 end
 
@@ -280,16 +315,33 @@ function update(self, dt)
 end
 
 function show_expectation(self, expectation)
+  go.cancel_animations(self.expectation_go, h_scale)
+  go.cancel_animations(self.expectation_icon, h_tint_w)
+  go.cancel_animations(self.expectation_sprite, h_tint_w)
+
   if expectation ~= nil then
     msg.post(self.expectation_go, h_enable)
+    go.animate(self.expectation_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), go.EASING_OUTBACK, 0.3)
+    go.animate(self.expectation_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_icon, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
     sprite.play_flipbook(self.expectation_icon, hash(expectation))
   else
-    msg.post(self.expectation_go, h_disable)
+    go.animate(self.expectation_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_icon, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0.01, 0.01, 1.0), go.EASING_OUTEXPO, 0.3, 0.0, function ()
+      msg.post(self.expectation_go, h_disable)
+    end)
   end
 end
 
-function final(self)
-  --dispatcher.unsubscribe(self.sub_id)
+local function deny(self)
+  msg.post(self.deny_sprite, h_enable)
+  go.set(self.deny_sprite, h_tint_w, 0)
+  go.set(self.deny_sprite, h_scale, vmath.vector3(1.5, 1.5, 1.0))
+  go.animate(self.deny_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+  go.animate(self.deny_sprite, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), go.EASING_OUTEXPO, 0.5, 0.0, function ()
+    show_bubble(self, nil)
+  end)
 end
 
 function on_message(self, message_id, message, sender)
@@ -325,7 +377,7 @@ function on_message(self, message_id, message, sender)
   elseif message_id == h_show_expectation then
     show_expectation(self, message.action)
   elseif message_id == h_deny then
+    deny(self)
     -- do deny animations
-    show_bubble(self, nil)
   end
 end

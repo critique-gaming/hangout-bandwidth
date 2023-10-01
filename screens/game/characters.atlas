@@ -18,6 +18,14 @@ images {
   image: "/main/assets/text_box_bg.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
+images {
+  image: "/screens/game/assets/text_bubble.png"
+  sprite_trim_mode: SPRITE_TRIM_MODE_OFF
+}
+images {
+  image: "/screens/game/assets/deny_symbol.png"
+  sprite_trim_mode: SPRITE_TRIM_MODE_OFF
+}
 animations {
   id: "character_test_walk"
   images {
