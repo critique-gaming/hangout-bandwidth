@@ -115,7 +115,7 @@ function init(self)
   self.speed = vmath.vector3(0.0)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
-  go.set_enabled(self.deny_sprite, false)
+  msg.post(self.deny_sprite, h_disable)
 
   set_popularity(self, math.random())
 
