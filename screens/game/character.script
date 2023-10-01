@@ -21,6 +21,7 @@ local h_tint = hash("tint")
 local h_size = hash("size")
 local h_tint_w = hash("tint.w")
 local h_color_w = hash("color.w")
+local h_color = hash("color")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -62,18 +63,19 @@ local show_expectation
 local get_speed
 local get_new_wander_position
 local set_popularity
+local show_player_indicator
 
 go.property("agent_id", hash(""))
 go.property("scale", 0.75)
 go.property("z", 0.0)
 go.property("movement_speed", 50)
-go.property("screen_limits_x", vmath.vector3(300, 1620, 0.0))
+go.property("screen_limits_x", vmath.vector3(500, 1620, 0.0))
 go.property("screen_limits_y", vmath.vector3(100, 780, 0.0))
 go.property("wander_min_radius", 20)
 go.property("wander_max_radius", 60)
 go.property("chance_to_wander", 0.6)
-go.property("min_move_duration", 0.5)
-go.property("max_move_duration", 2.0)
+go.property("min_move_duration", 1.0)
+go.property("max_move_duration", 3.0)
 
 function init(self)
   --self.sub_id = dispatcher.subscribe({})
@@ -106,6 +108,11 @@ function init(self)
   self.shadow_go = msg.url("shadow")
   self.shadow_position = go.get(self.shadow_go, h_position)
 
+  self.player_indicator = msg.url("player_indicator")
+  self.player_indicator_position = go.get(self.player_indicator, h_position)
+  self.player_indicator_sprite = msg.url("player_indicator#sprite")
+  self.player_indicator_label = msg.url("player_indicator#label")
+
   self.string_id = ""
 
   -- set up initial state
@@ -119,9 +126,7 @@ function init(self)
   self.wander_start_position = go.get(self.root, h_position)
   self.state_time = 0.0
   self.wander_position = get_new_wander_position(self)
-
-
-  set_popularity(self, math.random())
+  show_player_indicator(self, false)
 
   go.set_scale(vmath.vector3(0.01, 0.01, 1), self.bubble_go)
   label.set_text(self.bubble_label, "")
@@ -192,7 +197,6 @@ end
 
 function get_new_wander_position(self)
   self.wander_duration = self.min_move_duration + math.random() * (self.max_move_duration - self.min_move_duration)
-  print(self.wander_duration)
   local rand = self.wander_min_radius + math.random() * (self.wander_max_radius - self.wander_min_radius)
   local r = self.wander_max_radius * math.sqrt(rand)
   local theta = math.random() * 2.0 * math.pi
@@ -208,6 +212,15 @@ local function simplify_action(action)
     return "more"
   end
   return action
+end
+
+function show_player_indicator(self, show)
+  msg.post(self.player_indicator, show and h_enable or h_disable)
+  go.set(self.player_indicator_sprite, h_tint, colors.green_positive)
+  go.set(self.player_indicator_label, h_color, colors.green_positive)
+
+  go.cancel_animations(self.player_indicator, h_positiony)
+  go.animate(self.player_indicator, h_positiony, go.PLAYBACK_LOOP_PINGPONG, self.player_indicator_position.y + 10.0, gui.EASING_INOUTSINE, 1.0)
 end
 
 function show_bubble(self, text, action)
@@ -297,12 +310,11 @@ function update(self, dt)
 
   if self.state == STATE_WALKING then
     -- wander until duration elapses, then stop and set a timer to wander again after a random time
-    print(self.wander_duration, self.state_time)
     if (self.wander_duration and self.state_time > self.wander_duration) then
-      self.wander_timer = timer.delay(math.random(3, 8), false, function ()
+      set_state(self, STATE_IDLE)
+      self.wander_timer = timer.delay(0.3 + math.random() * 4.0, false, function ()
         set_state(self, STATE_WALKING)
       end)
-      set_state(self, STATE_IDLE)
     end
   end
   if self.state ~= STATE_WALKING then
@@ -391,6 +403,10 @@ function on_message(self, message_id, message, sender)
     set_state(self, message.state)
   elseif message_id == h_set_string_id then
     self.string_id = message.id
+    print(message.id)
+    if message.id == "player" then
+      show_player_indicator(self, true)
+    end
   elseif message_id == h_set_popularity then
     set_popularity(self, message.popularity)
   elseif message_id == h_show_bubble then

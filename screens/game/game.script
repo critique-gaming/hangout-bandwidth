@@ -6,7 +6,6 @@ local game = require "screens.game.game"
 
 local h_choose_buttons_show = hash("choose_buttons_show")
 local h__script = hash("/script")
-local h_character_set_string_id = hash("character_set_string_id")
 local h__root = hash("/root")
 local h_script = hash("script")
 local h_action_choose = hash("action_choose")
@@ -17,6 +16,8 @@ local h_show_bubble = hash("show_bubble")
 local h_deny = hash("deny")
 local h_show_expectation = hash("show_expectation")
 local h_advance_scene = hash("advance_scene")
+local h_set_popularity = hash("set_popularity")
+local h_set_string_id = hash("set_string_id")
 
 local spawn_character
 
@@ -37,6 +38,7 @@ function init(self)
     local character_instance, script_url = spawn_character(self, agent.id)
     agent.go = character_instance
     agent.script = script_url
+    msg.post(agent.script, h_set_popularity, { popularity = agent.popularity })
   end
 
   local function update_button_state()
@@ -147,7 +149,7 @@ function spawn_character(self, agent_id)
 
   local character = collectionfactory.create(self.character_factory, position, vmath.quat(), props, vmath.vector3(1.0))
   local character_url = msg.url(nil, character[h__root], h_script)
-  msg.post(character_url, h_character_set_string_id, { id = agent_id })
+  msg.post(character_url, h_set_string_id, { id = agent_id })
 
   return character, character_url
 end
