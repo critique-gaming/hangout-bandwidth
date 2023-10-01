@@ -35,19 +35,19 @@ local state_interrupting = "interrupt"
 local states = {
   [STATE_IDLE] = {
     name = state_idle,
-    flipbook = "_idle",
+    flipbook = "",
   },
   [STATE_TALKING] = {
     name = state_talking,
-    flipbook = "_speak",
+    flipbook = "",
   },
   [STATE_WALKING] = {
     name = state_walking,
-    flipbook = "_walk",
+    flipbook = "",
   },
   [STATE_INTERRUPTING] = {
     name = state_interrupting,
-    flipbook = "_idle",
+    flipbook = "",
   }
 }
 
@@ -156,7 +156,6 @@ function on_state_change(self, old_state)
   end
   local state = self.state
   local animation_id = hash("character_" .. self.string_id .. states[self.state].flipbook)
-  animation_id = hash("character_test_idle")
   -- local default_animation_id = hash("character_" .. self.string_id .. states[STATE_IDLE].flipbook)
   sprite.play_flipbook(self.sprite, animation_id)
 

@@ -41,8 +41,8 @@ function M.init_npc_agent(options)
   local self = M.init_agent(options)
 
   self.p_deny_interruptions = self.p_deny_interruptions or 0.5
-  self.pes_interrupt_topic_end = self.pes_interrupt_topic_end or 0.15
-  self.pes_interrupt_topic_start = self.pes_interrupt_topic_start or 0.002
+  self.pes_interrupt_topic_end = self.pes_interrupt_topic_end or 0.18
+  self.pes_interrupt_topic_start = self.pes_interrupt_topic_start or 0.006
   self.patience = self.patience or 5
   self.p_dislike_interrupt_topic_start = self.p_dislike_interrupt_topic_start or 0.8
   self.p_dislike_interrupt_topic_end = self.p_dislike_interrupt_topic_end or 0.1
