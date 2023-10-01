@@ -131,11 +131,7 @@ images {
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 images {
-  image: "/screens/game/assets/text_bubble.png"
-  sprite_trim_mode: SPRITE_TRIM_MODE_OFF
-}
-images {
-  image: "/screens/game/assets/thought_bubble.png"
+  image: "/screens/game/assets/character_shadow.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 margin: 0
