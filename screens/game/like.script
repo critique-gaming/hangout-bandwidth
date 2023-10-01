@@ -3,6 +3,8 @@ local filters = require "crit.filters"
 local h_sprite = hash("sprite")
 local h_thumbs_up = hash("thumbs_up")
 local h_thumbs_down = hash("thumbs_down")
+local h_scale = hash("scale")
+local h_tint_w = hash("tint.w")
 
 go.property("target_url", msg.url())
 go.property("like_amount", 1)
@@ -17,6 +19,17 @@ function init(self)
 
   self.sprite = msg.url(nil, nil, h_sprite)
   sprite.play_flipbook(self.sprite, self.like_amount > 0 and h_thumbs_up or h_thumbs_down)
+
+  local scale = go.get(self.sprite, h_scale)
+  go.set(self.sprite, h_scale, vmath.vector3(0.01, 0.01, 1))
+  go.set(self.sprite, h_tint_w, 0.0)
+
+  go.animate(self.sprite, h_scale, go.PLAYBACK_ONCE_FORWARD, scale, go.EASING_OUTEXPO, 0.3)
+  go.animate(self.sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3, 0.0, function ()
+    go.animate(self.sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_LINEAR, 0.3, 0.1, function ()
+      go.delete()
+    end)
+  end)
 end
 
 function update(self, dt)
