@@ -66,6 +66,7 @@ go.property("screen_limits_x", vmath.vector3(300, 1620, 0.0))
 go.property("screen_limits_y", vmath.vector3(100, 780, 0.0))
 go.property("wander_min_radius", 20)
 go.property("wander_max_radius", 60)
+go.property("chance_to_wander", 0.4)
 
 function init(self)
   --self.sub_id = dispatcher.subscribe({})
@@ -90,6 +91,9 @@ function init(self)
   self.popularity_go = msg.url("popularity")
   self.popularity_fill = msg.url("popularity#fill")
   self.popularity_background = msg.url("popularity#background")
+
+  self.shadow_go = msg.url("shadow")
+  self.shadow_position = go.get(self.shadow_go, h_position)
 
   self.string_id = ""
 
@@ -147,8 +151,8 @@ function on_state_change(self, old_state)
       go.animate(self.go, h_positiony, go.PLAYBACK_LOOP_PINGPONG, 10.0, gui.EASING_OUTEXPO, 0.3)
 
       local function animate_rotation()
-        go.animate(self.go, h_eulerz, go.PLAYBACK_ONCE_FORWARD, -2.0, gui.EASING_OUTEXPO, 0.3, 0.0, function ()
-          go.animate(self.go, h_eulerz, go.PLAYBACK_ONCE_FORWARD, 2.0, gui.EASING_OUTEXPO, 0.3, 0.0, function ()
+        go.animate(self.go, h_eulerz, go.PLAYBACK_ONCE_FORWARD, -1.5, gui.EASING_OUTEXPO, 0.3, 0.0, function ()
+          go.animate(self.go, h_eulerz, go.PLAYBACK_ONCE_FORWARD, 1.5, gui.EASING_OUTEXPO, 0.3, 0.0, function ()
             animate_rotation()
           end)
         end)
@@ -196,6 +200,15 @@ end
 local function animate(self, hflip)
   if hflip ~= self.hflip then
     sprite.set_hflip(self.sprite, hflip)
+    local shadow_position = self.shadow_position
+    if hflip then
+      shadow_position = vmath.vector3(
+        -self.shadow_position.x,
+        self.shadow_position.y,
+        self.shadow_position.z
+      )
+    end
+    go.set(self.shadow_go, h_position, shadow_position)
     self.hflip = hflip
   end
 end
