@@ -140,7 +140,7 @@ local function resolve(t)
   resolve(superclass)
 
   for k, v in pairs(superclass) do
-    if t[k] ~= nil then
+    if t[k] == nil then
       t[k] = v
     end
   end
