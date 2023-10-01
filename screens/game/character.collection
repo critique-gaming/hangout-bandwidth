@@ -324,7 +324,7 @@ embedded_instances {
   "material: \\\"/builtins/fonts/label-df.material\\\"\\n"
   "\"\n"
   "  position {\n"
-  "    x: -175.0\n"
+  "    x: -184.0\n"
   "    y: 143.0\n"
   "    z: 0.05\n"
   "  }\n"
@@ -368,8 +368,8 @@ embedded_instances {
   "}\n"
   ""
   position {
-    x: -71.0
-    y: 149.0
+    x: -89.0
+    y: 127.0
     z: 0.0
   }
   rotation {

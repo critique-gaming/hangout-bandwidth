@@ -19,10 +19,10 @@ color.red_negative = from_hex("#ff5151")
 color.yellow_warning = from_hex("#ffc051")
 
 
-color.agree = from_hex("#237552")
-color.disagree = from_hex("#752323")
-color.ask_for_more = from_hex("#233275")
-color.change_subject = from_hex("#5b2375")
+color.agree = from_hex("#5d8b6d")
+color.disagree = from_hex("#a0655e")
+color.ask_for_more = from_hex("#65888f")
+color.change_subject = from_hex("#8f6579")
 
 color.actions = {
   yes = color.agree,
