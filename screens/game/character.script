@@ -67,13 +67,13 @@ go.property("agent_id", hash(""))
 go.property("scale", 0.75)
 go.property("z", 0.0)
 go.property("movement_speed", 50)
-go.property("screen_limits_x", vmath.vector3(300, 1620, 0.0))
+go.property("screen_limits_x", vmath.vector3(500, 1620, 0.0))
 go.property("screen_limits_y", vmath.vector3(100, 780, 0.0))
 go.property("wander_min_radius", 20)
 go.property("wander_max_radius", 60)
 go.property("chance_to_wander", 0.6)
-go.property("min_move_duration", 0.5)
-go.property("max_move_duration", 2.0)
+go.property("min_move_duration", 1.0)
+go.property("max_move_duration", 3.0)
 
 function init(self)
   --self.sub_id = dispatcher.subscribe({})
@@ -119,9 +119,6 @@ function init(self)
   self.wander_start_position = go.get(self.root, h_position)
   self.state_time = 0.0
   self.wander_position = get_new_wander_position(self)
-
-
-  set_popularity(self, math.random())
 
   go.set_scale(vmath.vector3(0.01, 0.01, 1), self.bubble_go)
   label.set_text(self.bubble_label, "")
@@ -192,7 +189,6 @@ end
 
 function get_new_wander_position(self)
   self.wander_duration = self.min_move_duration + math.random() * (self.max_move_duration - self.min_move_duration)
-  print(self.wander_duration)
   local rand = self.wander_min_radius + math.random() * (self.wander_max_radius - self.wander_min_radius)
   local r = self.wander_max_radius * math.sqrt(rand)
   local theta = math.random() * 2.0 * math.pi
@@ -297,12 +293,12 @@ function update(self, dt)
 
   if self.state == STATE_WALKING then
     -- wander until duration elapses, then stop and set a timer to wander again after a random time
-    print(self.wander_duration, self.state_time)
     if (self.wander_duration and self.state_time > self.wander_duration) then
-      self.wander_timer = timer.delay(math.random(3, 8), false, function ()
+      set_state(self, STATE_IDLE)
+      self.wander_timer = timer.delay(0.3 + math.random() * 4.0, false, function ()
+        print("MEMEMEMMEE")
         set_state(self, STATE_WALKING)
       end)
-      set_state(self, STATE_IDLE)
     end
   end
   if self.state ~= STATE_WALKING then
