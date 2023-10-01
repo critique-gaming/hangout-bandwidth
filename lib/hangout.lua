@@ -218,13 +218,14 @@ function M.init_controller(agents, options)
   self.on_interruption_requested = self.on_interruption_requested or function (_pending_topic, _old_topic) end
   self.on_interruption_accepted = self.on_interruption_accepted or function (_pending_topic, _old_topic) end
   self.on_interruption_denied = self.on_interruption_denied or function (_pending_topic, _old_topic) end
-  self.on_change_topic = self.on_change_topic or function (_topic) end
+  self.on_change_topic = self.on_change_topic or function (_topic, _old_topic) end
   self.on_gain_like = self.on_gain_like or function (_sender, _target, _like_amount, _old_popularity, _new_popularity) end
   self.on_set_expectation = self.on_set_expectation or function (_agent, _expectation) end
   self.on_duration_expired = self.on_duration_expired or function () end
   self.on_game_over = self.on_game_over or function () end
 
   local function start_speaking(topic)
+    local old_topic = current_topic
     current_topic = topic
     time_remaining = topic.duration
 
@@ -232,7 +233,7 @@ function M.init_controller(agents, options)
       original_poster = topic.speaker
     end
 
-    topic.duration = self.on_change_topic(topic) or topic.duration
+    topic.duration = self.on_change_topic(topic, old_topic) or topic.duration
     time_remaining = topic.duration
 
     for _, agent in ipairs(agents) do
@@ -266,7 +267,7 @@ function M.init_controller(agents, options)
       for _, agent in ipairs(agents) do
         agent.topic_finished(topic)
       end
-      self.on_change_topic()
+      self.on_change_topic(nil, topic)
     end
   end
 

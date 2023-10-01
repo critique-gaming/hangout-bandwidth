@@ -179,7 +179,7 @@ function get_new_wander_position(self)
   return vmath.vector3(x, y, 0)
 end
 
-function show_bubble(self, text)
+function show_bubble(self, text, action)
   if text then
     msg.post(self.bubble_go, h_enable)
     label.set_text(self.bubble_label, text)
@@ -286,10 +286,11 @@ function on_message(self, message_id, message, sender)
   elseif message_id == h_set_popularity then
     self.popularity = message.popularity
   elseif message_id == h_show_bubble then
-    show_bubble(self, message.text)
+    show_bubble(self, message.text, message.action)
   elseif message_id == h_show_expectation then
-    show_expectation(self, string)
+    show_expectation(self, message.action)
   elseif message_id == h_deny then
     -- do deny animations
+    show_bubble(self, nil)
   end
 end
