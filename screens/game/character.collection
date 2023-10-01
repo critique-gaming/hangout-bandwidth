@@ -304,7 +304,7 @@ embedded_instances {
   "  id: \"sprite\"\n"
   "  type: \"sprite\"\n"
   "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"character_test_idle\\\"\\n"
+  "default_animation: \\\"character_deer1\\\"\\n"
   "material: \\\"/builtins/materials/sprite.material\\\"\\n"
   "blend_mode: BLEND_MODE_ALPHA\\n"
   "\"\n"
