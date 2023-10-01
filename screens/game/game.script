@@ -18,8 +18,10 @@ local h_show_expectation = hash("show_expectation")
 local h_advance_scene = hash("advance_scene")
 local h_set_popularity = hash("set_popularity")
 local h_set_string_id = hash("set_string_id")
+local h__like_source = hash("/like_source")
 
 local spawn_character
+local spawn_like
 
 function init(self)
   self.sub_id = dispatcher.subscribe({ h_action_choose, h_action_deny })
@@ -32,6 +34,7 @@ function init(self)
   local agents = hangout.load_agents_from_level(player, level, npcs)
 
   self.character_factory = msg.url("character_factory#collectionfactory")
+  self.like_factory = msg.url("like_factory#factory")
 
   self.characters = {}
   for _, agent in ipairs(agents) do
@@ -93,6 +96,12 @@ function init(self)
     on_gain_like = function (sender, target, like_amount, old_popularity, popularity)
       print("gained " .. like_amount .. " like: " .. sender.id .. "->" .. target.id .. " popularity: " .. old_popularity .. "->" .. popularity)
       sound.play(like_amount > 0 and "sfx#like" or "sfx#dislike")
+
+      spawn_like(self, sender, target, like_amount)
+
+      timer.delay(0.5, false, function ()
+        msg.post(target.script, h_set_popularity, { popularity = popularity, gain = like_amount > 0 })
+      end)
     end,
 
     on_set_expectation = function (agent, expectation, real_expectation)
@@ -157,6 +166,14 @@ function spawn_character(self, agent_id)
   msg.post(character_url, h_set_string_id, { id = agent_id })
 
   return character, character_url
+end
+
+function spawn_like(self, sender, target, like_amount)
+  local position = go.get_position(sender.go[h__like_source]) + go.get_position(sender.go[h__root])
+  factory.create(self.like_factory, position, vmath.quat(), {
+    target_url = msg.url(target.go[h__root]),
+    like_amount = like_amount,
+  }, vmath.vector3(1.0))
 end
 
 function update(self, dt)

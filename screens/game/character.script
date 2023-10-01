@@ -113,6 +113,9 @@ function init(self)
   self.player_indicator_sprite = msg.url("player_indicator#sprite")
   self.player_indicator_label = msg.url("player_indicator#label")
 
+  self.fx_like = msg.url("#fx_like")
+  self.fx_dislike = msg.url("#fx_dislike")
+
   self.string_id = ""
 
   -- set up initial state
@@ -289,7 +292,7 @@ local function animate(self, hflip)
   end
 end
 
-function set_popularity(self, popularity)
+function set_popularity(self, popularity, gain)
   self.popularity = popularity
   local fill_size = popularity * self.popularity_bar_size.x
 
@@ -301,6 +304,10 @@ function set_popularity(self, popularity)
 
   local fill_color = vmath.lerp(popularity, colors.red_negative, colors.green_positive)
   go.set(self.popularity_fill, h_tint, fill_color)
+
+  if gain ~= nil then
+    particlefx.play(gain and self.fx_like or self.fx_dislike)
+  end
 end
 
 function update(self, dt)
@@ -413,7 +420,7 @@ function on_message(self, message_id, message, sender)
     set_state(self, STATE_IDLE)
 
   elseif message_id == h_set_popularity then
-    set_popularity(self, message.popularity)
+    set_popularity(self, message.popularity, message.gain)
   elseif message_id == h_show_bubble then
     show_bubble(self, message.text, message.action)
   elseif message_id == h_show_expectation then
