@@ -24,6 +24,13 @@ color.disagree = from_hex("#752323")
 color.ask_for_more = from_hex("#233275")
 color.change_subject = from_hex("#5b2375")
 
+color.actions = {
+  yes = color.agree,
+  no = color.disagree,
+  change = color.change_subject,
+  more = color.ask_for_more,
+}
+
 color.text_color = colors.gray(0.9)
 
 color.button_outline = from_hex("#699dec")

@@ -151,11 +151,11 @@ images {
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 images {
-  image: "/screens/ui/assets/NO.png"
+  image: "/screens/ui/assets/no.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 images {
-  image: "/screens/ui/assets/switch.png"
+  image: "/screens/ui/assets/change.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 images {
