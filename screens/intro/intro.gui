@@ -115,15 +115,15 @@ nodes {
     w: 1.0
   }
   size {
-    x: 1200.0
-    y: 800.0
+    x: 1400.0
+    y: 1000.0
     z: 0.0
     w: 1.0
   }
   color {
-    x: 0.302
-    y: 0.2
-    z: 0.6
+    x: 0.102
+    y: 0.102
+    z: 0.102
     w: 1.0
   }
   type: TYPE_BOX
@@ -146,7 +146,7 @@ nodes {
   clipping_mode: CLIPPING_MODE_NONE
   clipping_visible: true
   clipping_inverted: false
-  alpha: 1.0
+  alpha: 0.89
   template_node_child: false
   size_mode: SIZE_MODE_MANUAL
   custom_type: 0
@@ -156,8 +156,8 @@ nodes {
 }
 nodes {
   position {
-    x: 0.0
-    y: 287.0
+    x: -8.0
+    y: 395.0
     z: 0.0
     w: 1.0
   }
@@ -256,7 +256,7 @@ nodes {
   blend_mode: BLEND_MODE_ALPHA
   text: "Hangout Bandwidth is a game about frustrating hangouts with friends that just don\'t seem to let you sneak even a single word in. \n"
   "\n"
-  "Hear what your friends say and decide whether to AGREE, DISAGREE, ASK for an explanation or simply CHANGE the topic. Seize a conversational pause or risk frustrating your friends by interrupting them. Remember though, the more popular ppl may not let you do so even if you try.\n"
+  "Move around, hear what your friends say and decide whether to AGREE, DISAGREE, ASK for an explanation or simply CHANGE the topic. Seize a conversational pause or risk frustrating your friends by interrupting them. Remember though, the more popular ppl may not let you do so even if you try.\n"
   "\n"
   "And, of course, we all know hangouts are not about having fun but about playing the popularity game. Say what others expect to hear and they\'ll like you more. Interrupt them or say what they don\'t expect and see your popularity tank."
   font: "Kalam_Regular"
@@ -285,7 +285,7 @@ nodes {
   outline_alpha: 0.0
   shadow_alpha: 0.0
   template_node_child: false
-  text_leading: 0.5
+  text_leading: 0.75
   text_tracking: 0.0
   custom_type: 0
   enabled: true
@@ -295,7 +295,7 @@ nodes {
 nodes {
   position {
     x: 0.0
-    y: -292.0
+    y: -398.0
     z: 0.0
     w: 1.0
   }
