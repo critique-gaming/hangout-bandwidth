@@ -11,16 +11,20 @@ local function game()
     progression.wait_for_message(h_advance_scene)
   end
 
-  if env.current_level then
-    levels.current_level = env.current_level
+  local popularity = levels.player_start_popularity
+  function run_level(level)
+    levels.current_level = level
+    levels.player_start_popularity = popularity
     screens.replace("game")()
-    progression.wait_for_message(h_advance_scene)
+    popularity = progression.wait_for_message(h_advance_scene).popularity
+  end
+
+  if env.current_level then
+    run_level(env.current_level)
   end
 
   for i = 1, #levels.levels do
-    levels.current_level = i
-    screens.replace("game")()
-    progression.wait_for_message(h_advance_scene)
+    run_level(i)
   end
 end
 

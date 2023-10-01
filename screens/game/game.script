@@ -118,7 +118,7 @@ function init(self)
       print("game time expired")
 
       timer.delay(3, false, function ()
-        dispatcher.dispatch(h_advance_scene)
+        dispatcher.dispatch(h_advance_scene, { popularity = self.player.popularity })
       end)
     end,
 
