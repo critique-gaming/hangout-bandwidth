@@ -10,6 +10,10 @@ local h_set_popularity = hash("set_popularity")
 local h_position = hash("position")
 local h_default = hash("default")
 local h_contact_point_response = hash("contact_point_response")
+local h_hide_expectation = hash("hide_expectation")
+local h_show_expectation = hash("show_expectation")
+local h_hide_bubble = hash("hide_bubble")
+local h_show_bubble = hash("show_bubble")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -138,7 +142,6 @@ function get_new_wander_position(self)
   local theta = math.random() * 2.0 * math.pi
   local x = r * math.cos(theta)
   local y = r * math.sin(theta)
-  print(x, y)
   x = x + self.position.x
   y = y + self.position.y
   return vmath.vector3(x, y, 0)
@@ -238,5 +241,11 @@ function on_message(self, message_id, message, sender)
     self.string_id = message.id
   elseif message_id == h_set_popularity then
     self.popularity = message.popularity
+  elseif message_id == h_show_bubble then
+    show_bubble(self, message.text)
+  elseif message_id == h_hide_bubble then
+    show_bubble(self)
+  elseif message_id == h_show_expectation then
+    show_expectation(self, string)
   end
 end
