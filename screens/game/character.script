@@ -71,7 +71,9 @@ go.property("screen_limits_x", vmath.vector3(300, 1620, 0.0))
 go.property("screen_limits_y", vmath.vector3(100, 780, 0.0))
 go.property("wander_min_radius", 20)
 go.property("wander_max_radius", 60)
-go.property("chance_to_wander", 0.4)
+go.property("chance_to_wander", 0.6)
+go.property("min_move_duration", 0.5)
+go.property("max_move_duration", 2.0)
 
 function init(self)
   --self.sub_id = dispatcher.subscribe({})
@@ -115,6 +117,9 @@ function init(self)
   self.speed = vmath.vector3(0.0)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
+  self.state_time = 0.0
+  self.wander_position = get_new_wander_position(self)
+
 
   set_popularity(self, math.random())
 
@@ -124,23 +129,19 @@ function init(self)
   go.set(self.bubble_sprite, h_tint_w, 0)
   msg.post(self.bubble_go, h_disable)
   self.bubble_shown = false
-
-  local debug_state_index = 1
-  timer.delay(2.0, true, function ()
-    debug_state_index = debug_state_index + 1
-    if debug_state_index > #states then
-      debug_state_index = 1
-    end
-    set_state(self, states[debug_state_index].name)
-  end)
 end
 
 function set_state(self, state_name)
-  if not state_name or not self.state_name_to_id[state_name] then
-    return
+  local state
+  if type(state_name) == "number" then
+    state = state_name
+  elseif type(state_name) == "string" then
+    if self.state_name_to_id[state_name] then
+      state = self.state_name_to_id[state_name]
+    end
   end
-  local state = self.state_name_to_id[state_name]
-  if state ~= self.state then
+
+  if state and state ~= self.state then
     local old_state = self.state
     self.state = state
     on_state_change(self, old_state)
@@ -148,6 +149,11 @@ function set_state(self, state_name)
 end
 
 function on_state_change(self, old_state)
+  self.state_time = 0
+  if self.wander_timer then
+    timer.cancel(self.wander_timer)
+    self.wander_timer = nil
+  end
   local state = self.state
   local animation_id = hash("character_" .. self.string_id .. states[self.state].flipbook)
   animation_id = hash("character_test_idle")
@@ -186,6 +192,8 @@ function on_state_change(self, old_state)
 end
 
 function get_new_wander_position(self)
+  self.wander_duration = self.min_move_duration + math.random() * (self.max_move_duration - self.min_move_duration)
+  print(self.wander_duration)
   local rand = self.wander_min_radius + math.random() * (self.wander_max_radius - self.wander_min_radius)
   local r = self.wander_max_radius * math.sqrt(rand)
   local theta = math.random() * 2.0 * math.pi
@@ -209,9 +217,11 @@ function show_bubble(self, text, action)
   go.cancel_animations(self.bubble_sprite, h_tint_w)
 
   if text and text ~= "" then
+    set_state(self, STATE_TALKING)
     label.set_text(self.bubble_label, text)
     go.animate(self.bubble_label, h_color_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
   else
+    set_state(self, math.random() < self.chance_to_wander and STATE_WALKING or STATE_IDLE)
     go.animate(self.bubble_label, h_color_w, go.PLAYBACK_ONCE_FORWARD, 0.0, go.EASING_LINEAR, 0.3)
   end
 
@@ -279,11 +289,23 @@ function set_popularity(self, popularity)
 end
 
 function update(self, dt)
+  self.state_time = self.state_time + dt
   -- reset accumulated collision deltas
   self.hitbox_correction = vmath.vector3(0.0)
 
   local speed = get_speed(self, dt)
   local horizontal_flip = speed.x > 0 and true or false
+
+  if self.state == STATE_WALKING then
+    -- wander until duration elapses, then stop and set a timer to wander again after a random time
+    print(self.wander_duration, self.state_time)
+    if (self.wander_duration and self.state_time > self.wander_duration) then
+      self.wander_timer = timer.delay(math.random(3, 8), false, function ()
+        set_state(self, STATE_WALKING)
+      end)
+      set_state(self, STATE_IDLE)
+    end
+  end
   if self.state ~= STATE_WALKING then
     horizontal_flip = self.hflip
   end
