@@ -315,16 +315,23 @@ function update(self, dt)
 end
 
 function show_expectation(self, expectation)
+  go.cancel_animations(self.expectation_go, h_scale)
+  go.cancel_animations(self.expectation_icon, h_tint_w)
+  go.cancel_animations(self.expectation_sprite, h_tint_w)
+
   if expectation ~= nil then
     msg.post(self.expectation_go, h_enable)
+    go.animate(self.expectation_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), go.EASING_OUTBACK, 0.3)
+    go.animate(self.expectation_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_icon, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
     sprite.play_flipbook(self.expectation_icon, hash(expectation))
   else
-    msg.post(self.expectation_go, h_disable)
+    go.animate(self.expectation_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_icon, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+    go.animate(self.expectation_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0.01, 0.01, 1.0), go.EASING_OUTEXPO, 0.3, 0.0, function ()
+      msg.post(self.expectation_go, h_disable)
+    end)
   end
-end
-
-function final(self)
-  --dispatcher.unsubscribe(self.sub_id)
 end
 
 local function deny(self)
