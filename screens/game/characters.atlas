@@ -67,6 +67,10 @@ images {
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
 images {
+  image: "/screens/game/assets/character_player.png"
+  sprite_trim_mode: SPRITE_TRIM_MODE_OFF
+}
+images {
   image: "/screens/game/assets/ray_section.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
