@@ -36,6 +36,8 @@ local function from_pes(pes, dt)
 end
 
 local all_actions = { "yes", "no", "more", "change" }
+local op_valid_actions = { "more", "change" }
+local opinionated_actions = { "change" }
 
 function M.init_npc_agent(options)
   local self = M.init_agent(options)
@@ -55,21 +57,30 @@ function M.init_npc_agent(options)
   local pending_expectation_like = 0
   local pending_expectation_like_target = nil
   local requested_more = false
+  local said_opinion = false
 
   local function meets_expectation(topic_action, expectation)
     return topic_action == expectation or topic_action == "followup_more" and expectation == "more"
   end
 
   local function get_action()
-    if self.controller.get_original_poster() == nil then
+    local op = self.controller.get_original_poster()
+    if op == nil then
       return "change"
+    end
+
+    local valid_actions = all_actions
+    if op == self then
+      valid_actions = op_valid_actions
+    elseif said_opinion then
+      valid_actions = opinionated_actions
     end
 
     if math.random() < self.p_popularity_lying then
       local max_popularity_gain = 0
       local max_popularity_gain_action = nil
 
-      for _, action in ipairs(all_actions) do
+      for _, action in ipairs(valid_actions) do
         local popularity_gain = 0
 
         for _, agent in ipairs(self.controller.agents) do
@@ -99,7 +110,7 @@ function M.init_npc_agent(options)
       return "more"
     end
 
-    return all_actions[math.random(#all_actions)]
+    return all_actions[math.random(#valid_actions)]
   end
 
   local function set_expectation(expectation)
@@ -182,6 +193,12 @@ function M.init_npc_agent(options)
       pending_expectation_like_target = nil
     end
     set_expectation(nil)
+
+    if topic.action == "change" then
+      said_opinion = false
+    elseif topic.speaker == self and (topic.action == "yes" or topic.action == "no") then
+      said_opinion = true
+    end
 
     requested_more = self.controller.get_original_poster() == self
       and topic.speaker ~= self
