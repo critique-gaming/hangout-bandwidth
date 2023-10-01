@@ -78,7 +78,7 @@ local button_defs = {
   },
 }
 
-local button_size_x = 260
+local button_size_x = 300
 local button_size_y = 70
 
 local deny_button_def = {
@@ -233,7 +233,15 @@ end
 function update(self, dt)
   local duration = game.controller and game.controller.duration or 0
   gui.set_enabled(self.timer, duration > 0)
-  gui.set_text(self.timer, tostring(math.ceil(duration)))
+
+  if duration > 0 then
+    duration = math.ceil(duration)
+    local minutes = math.floor(duration / 60)
+    local seconds = duration - minutes * 60
+    local seconds_padded = seconds >= 10 and tostring(seconds) or ("0" .. seconds)
+    local formatted = minutes .. ":" .. seconds_padded
+    gui.set_text(self.timer, formatted)
+  end
 end
 
 function on_message(self, message_id, message, sender)
