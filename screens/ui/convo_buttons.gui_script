@@ -36,7 +36,7 @@ local button_defs = {
     },
   },
   [2] = {
-    text = "Contradict [N]",
+    text = "Disagree [N]",
     action_name = "no",
     color = colors.white,
     action = function ()
