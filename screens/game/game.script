@@ -16,6 +16,7 @@ local h_action_deny = hash("action_deny")
 local h_show_bubble = hash("show_bubble")
 local h_deny = hash("deny")
 local h_show_expectation = hash("show_expectation")
+local h_advance_scene = hash("advance_scene")
 
 local spawn_character
 
@@ -26,7 +27,7 @@ function init(self)
   self.player = player
   player.popularity = levels.player_start_popularity
 
-  local level = levels.levels[1]
+  local level = levels.levels[levels.current_level or 1]
   local agents = hangout.load_agents_from_level(player, level, npcs)
 
   self.character_factory = msg.url("character_factory#collectionfactory")
@@ -99,6 +100,10 @@ function init(self)
       update_button_state()
       dispatcher.dispatch(h_level_timed_out)
       print("game time expired")
+
+      timer.delay(3, false, function ()
+        dispatcher.dispatch(h_advance_scene)
+      end)
     end,
 
     on_game_over = function ()
