@@ -115,10 +115,8 @@ function button_rect.make_button(template_node, opts)
   local scale = opts.scale or 1.0
   local image_scale = opts.image_scale or 1.0
 
-  if opts.image then
-    util.try_play_flipbook(node_image, opts.image)
-  else
-    gui.delete_node(node_image)
+  if not opts.no_image then
+    util.try_play_flipbook(node_image, opts.action_name)
   end
 
   local text_metrics

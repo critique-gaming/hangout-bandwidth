@@ -12,6 +12,7 @@ function init(self)
 
   self.button = button_rect.make_button(button_template, {
     text = "Start game",
+    no_image = true,
     action_name = "yes",
     color = colors.white,
     action = function ()
