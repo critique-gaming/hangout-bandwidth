@@ -15,6 +15,7 @@ local h_deny_button_show = hash("deny_button_show")
 local h_action_deny = hash("action_deny")
 local h_show_bubble = hash("show_bubble")
 local h_deny = hash("deny")
+local h_show_expectation = hash("show_expectation")
 
 local spawn_character
 
@@ -58,14 +59,8 @@ function init(self)
         msg.post(topic.speaker.script, h_show_bubble, {
           text = text, action = topic.action
         })
-
-        label.set_text("dialogue#text", topic.speaker.id .. ": " .. text)
-        label.set_text("dialogue#action", topic.action)
       else
         print("topic ended")
-
-        label.set_text("dialogue#text", "")
-        label.set_text("dialogue#action", "")
       end
 
       update_button_state()
@@ -74,16 +69,12 @@ function init(self)
     on_interruption_accepted = function (new_topic, old_topic)
       print("interruption accepted: ", new_topic.speaker.id)
       update_button_state()
-
-      msg.post("interruption#label", "disable")
     end,
 
     on_interruption_denied = function (new_topic, old_topic)
       print("interruption denied: ", new_topic.speaker.id)
       update_button_state()
-
       msg.post(new_topic.speaker.script, h_deny)
-      msg.post("interruption#label", "disable")
     end,
 
     on_interruption_requested = function (new_topic, old_topic)
@@ -93,10 +84,6 @@ function init(self)
       msg.post(new_topic.speaker.script, h_show_bubble, {
         text = "", action = new_topic.action
       })
-
-      msg.post("interruption#label", "enable")
-      label.set_text("interruption#label", "INTERRUPTION!!! " .. new_topic.speaker.id)
-
     end,
 
     on_gain_like = function (sender, target, like_amount, old_popularity, popularity)
@@ -105,6 +92,7 @@ function init(self)
 
     on_set_expectation = function (agent, expectation, real_expectation)
       print("set expectation:", agent.id, expectation, real_expectation)
+      msg.post(agent.script, h_show_expectation, { action = expectation })
     end,
 
     on_duration_expired = function ()
@@ -129,8 +117,6 @@ function init(self)
   function player.interrupted()
     dispatcher.dispatch(h_deny_button_show, { show = false })
   end
-
-  msg.post("interruption#label", "disable")
 end
 
 function final(self)
@@ -163,9 +149,6 @@ end
 
 function update(self, dt)
   game.controller.update(dt)
-
-  local topic, progress = game.controller.get_current_topic()
-  label.set_text("dialogue#progress", tostring(progress))
 end
 
 function on_message(self, message_id, message)

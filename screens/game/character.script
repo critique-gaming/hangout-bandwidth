@@ -258,7 +258,7 @@ function on_message(self, message_id, message, sender)
   elseif message_id == h_show_bubble then
     show_bubble(self, message.text, message.action)
   elseif message_id == h_show_expectation then
-    show_expectation(self, string)
+    show_expectation(self, message.action)
   elseif message_id == h_deny then
     -- do deny animations
     show_bubble(self, nil)
