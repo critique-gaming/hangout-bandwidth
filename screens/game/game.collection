@@ -3,8 +3,8 @@ collection_instances {
   id: "level"
   collection: "/screens/game/level.collection"
   position {
-    x: 0.0
-    y: 0.0
+    x: 960.0
+    y: 540.0
     z: 0.0
   }
   rotation {
@@ -37,26 +37,6 @@ embedded_instances {
   "    w: 1.0\n"
   "  }\n"
   "  property_decls {\n"
-  "  }\n"
-  "}\n"
-  "embedded_components {\n"
-  "  id: \"sprite\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
-  "default_animation: \\\"slice9_box\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 18.0\n"
-  "    y: 18.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
   "  }\n"
   "}\n"
   ""
