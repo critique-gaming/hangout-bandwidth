@@ -52,6 +52,7 @@ function M.init_npc_agent(options)
   self.pes_expectation = self.pes_expectation or 0.2
   self.p_hide_expectation = self.p_hide_expectation or 0.4
   self.pes_expectation_like = self.pes_expectation_like or 0.8
+  self.pes_speak_when_free = self.pes_speak_when_free or self.pes_interrupt_topic_end
 
   local interruption_deny_elapsed = -1
   local pending_expectation_like = 0
@@ -158,9 +159,12 @@ function M.init_npc_agent(options)
       end
     end
 
-    local probability_every_second = math.pow(1 - topic_progress, self.patience)
-      * (self.pes_interrupt_topic_end - self.pes_interrupt_topic_start)
-      + self.pes_interrupt_topic_start
+    local probability_every_second = topic_progress <= 0
+      and self.pes_speak_when_free
+      or (math.pow(1 - topic_progress, self.patience)
+        * (self.pes_interrupt_topic_end - self.pes_interrupt_topic_start)
+        + self.pes_interrupt_topic_start)
+
     local probability = from_pes(probability_every_second, dt)
 
     if math.random() < probability then
