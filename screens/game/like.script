@@ -1,0 +1,26 @@
+local filters = require "crit.filters"
+
+local h_sprite = hash("sprite")
+local h_thumbs_up = hash("thumbs_up")
+local h_thumbs_down = hash("thumbs_down")
+
+go.property("target_url", msg.url())
+go.property("like_amount", 1)
+
+local filter = filters.low_pass(1.0)
+
+function init(self)
+  self.follow = false
+  timer.delay(0.3, false, function ()
+    self.follow = true
+  end)
+
+  self.sprite = msg.url(nil, nil, h_sprite)
+  sprite.play_flipbook(self.sprite, self.like_amount > 0 and h_thumbs_up or h_thumbs_down)
+end
+
+function update(self, dt)
+  if self.follow then
+    go.set_position(filter(go.get_position(), go.get_position(self.target_url), dt))
+  end
+end
