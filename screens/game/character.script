@@ -89,6 +89,7 @@ function init(self)
   self.bubble_go = msg.url("bubble")
   self.bubble_sprite = msg.url("bubble#sprite")
   self.bubble_label = msg.url("bubble#label")
+  self.deny_sprite = msg.url("bubble#deny")
 
   self.expectation_go = msg.url("expectation")
   self.expectation_sprite = msg.url("expectation#sprite")
@@ -114,6 +115,7 @@ function init(self)
   self.speed = vmath.vector3(0.0)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
+  go.set_enabled(self.deny_sprite, false)
 
   set_popularity(self, math.random())
 
