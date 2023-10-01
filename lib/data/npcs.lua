@@ -32,7 +32,7 @@ local M = {
   fox2 = { extends = "fox" },
   fox3 = { extends = "fox" },
 
-  dog = { -- The star
+  goat = { -- The star
     popularity = 0.8,
     p_deny_interruptions = 0.5,
     pes_interrupt_topic_end = 0.15,
@@ -44,9 +44,9 @@ local M = {
     p_dislike_interrupt_topic_start = 0.6,
     p_dislike_interrupt_topic_end = 0.05,
   },
-  dog1 = { extends = "dog" },
-  dog2 = { extends = "dog" },
-  dog3 = { extends = "dog" },
+  goat1 = { extends = "goat" },
+  goat2 = { extends = "goat" },
+  goat3 = { extends = "goat" },
 
   cat = { -- The judge
     popularity = 0.7,
