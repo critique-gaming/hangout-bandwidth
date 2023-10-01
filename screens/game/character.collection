@@ -45,6 +45,7 @@ embedded_instances {
   children: "bubble_root"
   children: "character"
   children: "expectation"
+  children: "like_source"
   children: "mumbles"
   children: "player_indicator"
   children: "popularity"
