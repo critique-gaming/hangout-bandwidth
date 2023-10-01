@@ -115,7 +115,6 @@ function init(self)
   self.speed = vmath.vector3(0.0)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
-  msg.post(self.deny_sprite, h_disable)
 
   set_popularity(self, math.random())
 
@@ -224,6 +223,7 @@ function show_bubble(self, text, action)
 
   if shown then
     msg.post(self.bubble_go, h_enable)
+    msg.post(self.deny_sprite, h_disable)
     local duration = text == "" and 1.0 or 0.3
     local easing = text == "" and go.EASING_OUTEXPO or go.EASING_OUTBACK
     go.animate(self.bubble_go, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), easing, duration)
@@ -327,6 +327,16 @@ function final(self)
   --dispatcher.unsubscribe(self.sub_id)
 end
 
+local function deny(self)
+  msg.post(self.deny_sprite, h_enable)
+  go.set(self.deny_sprite, h_tint_w, 0)
+  go.set(self.deny_sprite, h_scale, vmath.vector3(1.5, 1.5, 1.0))
+  go.animate(self.deny_sprite, h_tint_w, go.PLAYBACK_ONCE_FORWARD, 1.0, go.EASING_LINEAR, 0.3)
+  go.animate(self.deny_sprite, h_scale, go.PLAYBACK_ONCE_FORWARD, vmath.vector3(1.0), go.EASING_OUTEXPO, 0.5, 0.0, function ()
+    show_bubble(self, nil)
+  end)
+end
+
 function on_message(self, message_id, message, sender)
   if message_id == h_contact_point_response then
     local position = self.position
@@ -360,7 +370,7 @@ function on_message(self, message_id, message, sender)
   elseif message_id == h_show_expectation then
     show_expectation(self, message.action)
   elseif message_id == h_deny then
+    deny(self)
     -- do deny animations
-    show_bubble(self, nil)
   end
 end
