@@ -3,6 +3,7 @@ local Layout = require "crit.layout"
 local button_rect = require "screens.ui.button_rect_choose"
 local colors = require "lib.colors"
 local game = require "screens.game.game"
+local Button = require "crit.button"
 
 local h_window_change_size = hash("window_change_size")
 local h_acquire_input_focus = hash("acquire_input_focus")
@@ -13,12 +14,16 @@ local h_key_m = hash("key_m")
 local h_key_n = hash("key_n")
 local h_key_c = hash("key_c")
 local h_level_timed_out = hash("level_timed_out")
+local h_action_deny = hash("action_deny")
+local h_key_space = hash("key_space")
+local h_deny_button_show = hash("deny_button_show")
+local h_color_w = hash("color.w")
 
 local show
 
 local button_defs = {
   [1] = {
-    text = "Accept",
+    text = "Accept [Y]",
     action_name = "yes",
     color = colors.white,
     action = function ()
@@ -31,7 +36,7 @@ local button_defs = {
     },
   },
   [2] = {
-    text = "Contradict",
+    text = "Contradict [N]",
     action_name = "no",
     color = colors.white,
     action = function ()
@@ -45,7 +50,7 @@ local button_defs = {
   },
 
   [3] = {
-    text = "Ask For More",
+    text = "Ask For More [M]",
     color = colors.white,
     action_name = "more",
     action = function ()
@@ -59,7 +64,7 @@ local button_defs = {
   },
 
   [4] = {
-    text = "Change Subject",
+    text = "Change Subject [C]",
     color = colors.white,
     action_name = "change",
     action = function ()
@@ -72,12 +77,32 @@ local button_defs = {
     },
   },
 }
-local button_size_x = 210
+
+local button_size_x = 260
 local button_size_y = 70
+
+local deny_button_def = {
+  text = "Speak over interruption [SPACE]",
+  color = colors.white,
+  action_name = "no",
+  action = function ()
+    dispatcher.dispatch(h_action_deny)
+    dispatcher.dispatch(h_deny_button_show, { show = false })
+  end,
+  button_opts = {
+    shortcut_actions = {
+      h_key_space
+    }
+  },
+  size_x = 500,
+  size_y = button_size_y,
+}
 
 function init(self)
   self.sub_id = dispatcher.subscribe({
-    h_window_change_size, h_choose_buttons_show,
+    h_window_change_size,
+    h_choose_buttons_show,
+    h_deny_button_show,
     h_level_timed_out
   })
 
@@ -85,6 +110,7 @@ function init(self)
   self.container = gui.get_node("container")
   self.timer = gui.get_node("timer")
   self.game_over = gui.get_node("game_over")
+  self.deny_button_container = gui.get_node("deny_button_container")
   self.button_container = gui.get_node("button_container")
   self.button_container_pos = gui.get_position(self.button_container)
   self.button_container_size = gui.get_size(self.button_container)
@@ -116,12 +142,41 @@ function init(self)
   end
 
   gui.set_enabled(self.button_container, false)
+  -- gui.set_alpha(self.button_container, 0.0)
   self.shown = false
+
+  self.deny_button = button_rect.make_button(self.button_template, deny_button_def)
+  self.deny_button.set_enabled(false)
+  gui.set_parent(self.deny_button.nodes.root, self.deny_button_container)
+
+  gui.set_enabled(self.deny_button_container, false)
+  gui.set_alpha(self.deny_button_container, 0.0)
+  self.deny_shown = false
 
   gui.set_enabled(self.timer, false)
   gui.set_enabled(self.game_over, false)
 
   msg.post(".", h_acquire_input_focus)
+end
+
+function deny_show(self, shown)
+  if shown == self.deny_shown then
+    return
+  end
+  self.deny_shown = shown
+
+  if shown then
+    gui.set_enabled(self.deny_button_container, true)
+    gui.cancel_animation(self.deny_button_container, h_color_w)
+    gui.animate(self.deny_button_container, h_color_w, 1.0, gui.EASING_LINEAR, 0.2)
+  else
+    gui.cancel_animation(self.deny_button_container, h_color_w)
+    gui.animate(self.deny_button_container, h_color_w, 0.0, gui.EASING_LINEAR, 0.5, 0.0, function ()
+      gui.set_enabled(self.deny_button_container, false)
+    end)
+  end
+
+  self.deny_button.set_enabled(shown)
 end
 
 function show(self, shown)
@@ -186,10 +241,12 @@ function on_message(self, message_id, message, sender)
     self.layout.place()
   elseif message_id == h_choose_buttons_show then
     show(self, message.show)
+  elseif message_id == h_deny_button_show then
+    deny_show(self, message.show)
   elseif message_id == h_level_timed_out then
     gui.set_enabled(self.game_over, true)
     gui.set_alpha(self.game_over, 0)
-    gui.animate(self.game_over, "color.w", 1, gui.EASING_LINEAR, 0.5, 1.0)
+    gui.animate(self.game_over, h_color_w, 1, gui.EASING_LINEAR, 0.5, 1.0)
     gui.set_enabled(self.game_over, true)
     show(self, message.show)
   end
@@ -198,7 +255,17 @@ end
 function on_input(self, action_id, action)
   for i, button in ipairs(self.buttons) do
     if button.on_input(action_id, action) then
-      return true;
+      return true
     end
+  end
+
+  -- Handle key shortcut on button down
+  if self.deny_button.state ~= Button.STATE_DISABLED and action_id == h_key_space and action.pressed then
+    self.deny_button.action()
+    return true
+  end
+
+  if self.deny_button.on_input(action_id, action) then
+    return true
   end
 end

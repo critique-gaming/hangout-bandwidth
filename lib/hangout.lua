@@ -40,16 +40,16 @@ local all_actions = { "yes", "no", "more", "change" }
 function M.init_npc_agent(options)
   local self = M.init_agent(options)
 
-  self.p_deny_interruptions = 0.5
-  self.pes_interrupt_topic_end = 0.15
-  self.pes_interrupt_topic_start = 0.002
-  self.patience = 5
-  self.p_dislike_interrupt_topic_start = 0.8
-  self.p_dislike_interrupt_topic_end = 0.1
-  self.p_popularity_lying = 0.2
-  self.pes_expectation = 0.05
-  self.p_hide_expectation = 0.5
-  self.pes_expectation_like = 0.3
+  self.p_deny_interruptions = self.p_deny_interruptions or 0.5
+  self.pes_interrupt_topic_end = self.pes_interrupt_topic_end or 0.15
+  self.pes_interrupt_topic_start = self.pes_interrupt_topic_start or 0.002
+  self.patience = self.patience or 5
+  self.p_dislike_interrupt_topic_start = self.p_dislike_interrupt_topic_start or 0.8
+  self.p_dislike_interrupt_topic_end = self.p_dislike_interrupt_topic_end or 0.1
+  self.p_popularity_lying = self.p_popularity_lying or 0.2
+  self.pes_expectation = self.pes_expectation or 0.05
+  self.p_hide_expectation = self.p_hide_expectation or 0.5
+  self.pes_expectation_like = self.pes_expectation_like or 0.3
 
   local interruption_deny_elapsed = -1
   local pending_expectation_like = 0

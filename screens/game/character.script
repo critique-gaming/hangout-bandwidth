@@ -142,6 +142,7 @@ function get_new_wander_position(self)
   local theta = math.random() * 2.0 * math.pi
   local x = r * math.cos(theta)
   local y = r * math.sin(theta)
+  print(x, y)
   x = x + self.position.x
   y = y + self.position.y
   return vmath.vector3(x, y, 0)
