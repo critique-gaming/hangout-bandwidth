@@ -1,5 +1,6 @@
 local dispatcher = require "crit.dispatcher"
 local util = require "lib.util"
+local colors = require "lib.colors"
 
 local h_scale = hash("scale")
 local h_enable = hash("enable")
@@ -15,8 +16,9 @@ local h_show_bubble = hash("show_bubble")
 local h_deny = hash("deny")
 local h_positionz = hash("position.z")
 local h_positiony = hash("position.y")
-local h_rotationz = hash("rotation.z")
 local h_eulerz = hash("euler.z")
+local h_tint = hash("tint")
+local h_size = hash("size")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -57,6 +59,7 @@ local show_bubble
 local show_expectation
 local get_speed
 local get_new_wander_position
+local set_popularity
 
 go.property("agent_id", hash(""))
 go.property("scale", 0.75)
@@ -91,6 +94,8 @@ function init(self)
   self.popularity_go = msg.url("popularity")
   self.popularity_fill = msg.url("popularity#fill")
   self.popularity_background = msg.url("popularity#background")
+  self.popularity_bar_size = go.get(self.popularity_background, h_size)
+  go.set(self.popularity_background, h_tint, colors.black)
 
   self.shadow_go = msg.url("shadow")
   self.shadow_position = go.get(self.shadow_go, h_position)
@@ -108,6 +113,8 @@ function init(self)
   self.wander_position = vmath.vector3(0.0)
   self.wander_start_position = go.get(self.root, h_position)
 
+
+  set_popularity(self, math.random())
   local debug_state_index = 1
   timer.delay(2.0, true, function ()
     debug_state_index = debug_state_index + 1
@@ -213,6 +220,20 @@ local function animate(self, hflip)
   end
 end
 
+function set_popularity(self, popularity)
+  self.popularity = popularity
+  local fill_size = popularity * self.popularity_bar_size.x
+
+  go.set(self.popularity_fill, h_size, vmath.vector3(
+    fill_size,
+    self.popularity_bar_size.y - 2,
+    self.popularity_bar_size.z
+  ))
+
+  local fill_color = vmath.lerp(popularity, colors.red_negative, colors.green_positive)
+  go.set(self.popularity_fill, h_tint, fill_color)
+end
+
 function update(self, dt)
   -- reset accumulated collision deltas
   self.hitbox_correction = vmath.vector3(0.0)
@@ -284,7 +305,7 @@ function on_message(self, message_id, message, sender)
   elseif message_id == h_set_string_id then
     self.string_id = message.id
   elseif message_id == h_set_popularity then
-    self.popularity = message.popularity
+    set_popularity(self, message.popularity)
   elseif message_id == h_show_bubble then
     show_bubble(self, message.text, message.action)
   elseif message_id == h_show_expectation then
