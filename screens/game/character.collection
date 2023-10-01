@@ -6,6 +6,7 @@ embedded_instances {
   children: "character"
   children: "expectation"
   children: "popularity"
+  children: "shadow"
   data: "components {\n"
   "  id: \"script\"\n"
   "  component: \"/screens/game/character.script\"\n"
@@ -396,7 +397,7 @@ embedded_instances {
   position {
     x: 0.0
     y: 0.0
-    z: -0.1
+    z: -0.2
   }
   rotation {
     x: 0.0

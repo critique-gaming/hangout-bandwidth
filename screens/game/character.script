@@ -10,10 +10,9 @@ local h_set_popularity = hash("set_popularity")
 local h_position = hash("position")
 local h_default = hash("default")
 local h_contact_point_response = hash("contact_point_response")
-local h_hide_expectation = hash("hide_expectation")
 local h_show_expectation = hash("show_expectation")
-local h_hide_bubble = hash("hide_bubble")
 local h_show_bubble = hash("show_bubble")
+local h_deny = hash("deny")
 
 local STATE_IDLE = 1
 local STATE_TALKING = 2
@@ -243,9 +242,9 @@ function on_message(self, message_id, message, sender)
     self.popularity = message.popularity
   elseif message_id == h_show_bubble then
     show_bubble(self, message.text)
-  elseif message_id == h_hide_bubble then
-    show_bubble(self)
   elseif message_id == h_show_expectation then
     show_expectation(self, string)
+  elseif message_id == h_deny then
+    -- do deny animations
   end
 end

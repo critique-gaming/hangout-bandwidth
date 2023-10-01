@@ -129,8 +129,8 @@ function spawn_character(self, agent_id)
   }
 
   local position = vmath.vector3(
-    math.random(200, 1720),
-    math.random(200, 800),
+    math.random(500, 1420),
+    math.random(200, 600),
     0.0
   )
 
