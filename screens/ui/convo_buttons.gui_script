@@ -94,7 +94,7 @@ local deny_button_def = {
       h_key_space
     }
   },
-  size_x = 400,
+  size_x = 500,
   size_y = button_size_y,
 }
 
