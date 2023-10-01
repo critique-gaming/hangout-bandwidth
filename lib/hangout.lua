@@ -49,9 +49,9 @@ function M.init_npc_agent(options)
   self.p_dislike_interrupt_topic_start = self.p_dislike_interrupt_topic_start or 0.8
   self.p_dislike_interrupt_topic_end = self.p_dislike_interrupt_topic_end or 0.1
   self.p_popularity_lying = self.p_popularity_lying or 0.2
-  self.pes_expectation = self.pes_expectation or 0.05
-  self.p_hide_expectation = self.p_hide_expectation or 0.5
-  self.pes_expectation_like = self.pes_expectation_like or 0.3
+  self.pes_expectation = self.pes_expectation or 0.2
+  self.p_hide_expectation = self.p_hide_expectation or 0.4
+  self.pes_expectation_like = self.pes_expectation_like or 0.8
 
   local interruption_deny_elapsed = -1
   local pending_expectation_like = 0
