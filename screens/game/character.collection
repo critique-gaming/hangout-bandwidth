@@ -190,15 +190,35 @@ embedded_instances {
   data: "embedded_components {\n"
   "  id: \"sprite\"\n"
   "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"text_box_bg\\\"\\n"
+  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
+  "default_animation: \\\"thought_bubble\\\"\\n"
   "material: \\\"/builtins/materials/sprite.material\\\"\\n"
   "blend_mode: BLEND_MODE_ALPHA\\n"
   "\"\n"
   "  position {\n"
+  "    x: 14.0\n"
+  "    y: 47.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
   "    x: 0.0\n"
   "    y: 0.0\n"
   "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
+  "  id: \"icon\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
+  "default_animation: \\\"yes\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 14.0\n"
+  "    y: 64.0\n"
+  "    z: 0.1\n"
   "  }\n"
   "  rotation {\n"
   "    x: 0.0\n"
@@ -209,8 +229,8 @@ embedded_instances {
   "}\n"
   ""
   position {
-    x: -166.0
-    y: 148.0
+    x: -71.0
+    y: 160.0
     z: 0.3
   }
   rotation {
@@ -304,8 +324,8 @@ embedded_instances {
   "material: \\\"/builtins/fonts/label-df.material\\\"\\n"
   "\"\n"
   "  position {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
+  "    x: -175.0\n"
+  "    y: 143.0\n"
   "    z: 0.05\n"
   "  }\n"
   "  rotation {\n"
@@ -323,8 +343,8 @@ embedded_instances {
   "embedded_components {\n"
   "  id: \"sprite\"\n"
   "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"text_box_bg\\\"\\n"
+  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
+  "default_animation: \\\"text_bubble\\\"\\n"
   "material: \\\"/builtins/materials/sprite.material\\\"\\n"
   "blend_mode: BLEND_MODE_ALPHA\\n"
   "slice9 {\\n"
@@ -333,17 +353,10 @@ embedded_instances {
   "  z: 5.0\\n"
   "  w: 5.0\\n"
   "}\\n"
-  "size {\\n"
-  "  x: 400.0\\n"
-  "  y: 80.0\\n"
-  "  z: 0.0\\n"
-  "  w: 0.0\\n"
-  "}\\n"
-  "size_mode: SIZE_MODE_MANUAL\\n"
   "\"\n"
   "  position {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
+  "    x: -175.0\n"
+  "    y: 123.0\n"
   "    z: 0.0\n"
   "  }\n"
   "  rotation {\n"
@@ -355,8 +368,8 @@ embedded_instances {
   "}\n"
   ""
   position {
-    x: -356.0
-    y: -1.0
+    x: -71.0
+    y: 149.0
     z: 0.0
   }
   rotation {
