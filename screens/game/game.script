@@ -78,6 +78,7 @@ function init(self)
       print("interruption denied: ", new_topic.speaker.id)
       update_button_state()
       msg.post(new_topic.speaker.script, h_deny)
+      sound.play("sfx#deny")
     end,
 
     on_interruption_requested = function (new_topic, old_topic)
@@ -91,11 +92,15 @@ function init(self)
 
     on_gain_like = function (sender, target, like_amount, old_popularity, popularity)
       print("gained " .. like_amount .. " like: " .. sender.id .. "->" .. target.id .. " popularity: " .. old_popularity .. "->" .. popularity)
+      sound.play(like_amount > 0 and "sfx#like" or "sfx#dislike")
     end,
 
     on_set_expectation = function (agent, expectation, real_expectation)
       print("set expectation:", agent.id, expectation, real_expectation)
       msg.post(agent.script, h_show_expectation, { action = expectation })
+      if expectation ~= nil then
+        sound.play("sfx#new_expectation")
+      end
     end,
 
     on_duration_expired = function ()
