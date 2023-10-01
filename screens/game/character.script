@@ -90,6 +90,7 @@ function init(self)
 
   self.expectation_go = msg.url("expectation")
   self.expectation_sprite = msg.url("expectation#sprite")
+  self.expectation_icon = msg.url("expectation#icon")
 
   self.popularity_go = msg.url("popularity")
   self.popularity_fill = msg.url("popularity#fill")
@@ -186,10 +187,18 @@ function get_new_wander_position(self)
   return vmath.vector3(x, y, 0)
 end
 
+local function simplify_action(action)
+  if action == "followup_more" then
+    return "more"
+  end
+  return action
+end
+
 function show_bubble(self, text, action)
   if text then
     msg.post(self.bubble_go, h_enable)
     label.set_text(self.bubble_label, text)
+    go.set(self.bubble_sprite, h_tint, colors.actions[simplify_action(action)])
   else
     msg.post(self.bubble_go, h_disable)
   end
@@ -271,7 +280,12 @@ function update(self, dt)
 end
 
 function show_expectation(self, expectation)
-  msg.post(self.expectation_go, expectation and h_enable or h_disable)
+  if expectation ~= nil then
+    msg.post(self.expectation_go, h_enable)
+    sprite.play_flipbook(self.expectation_icon, hash(expectation))
+  else
+    msg.post(self.expectation_go, h_disable)
+  end
 end
 
 function final(self)
