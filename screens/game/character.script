@@ -342,6 +342,7 @@ function update(self, dt)
 
   local char_z = util.remap_value(self.position.y, 0.0, 1080, 0.2, -0.2)
   go.set(self.go, h_positionz, char_z)
+  go.set(self.bubble_root_go, h_positionz, char_z)
 
   self.speed = speed
 end
@@ -415,6 +416,5 @@ function on_message(self, message_id, message, sender)
     show_expectation(self, message.action)
   elseif message_id == h_deny then
     deny(self)
-    -- do deny animations
   end
 end
