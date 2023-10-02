@@ -201,7 +201,7 @@ function button_rect.make_button(template_node, opts)
     end,
     nodes = button_nodes,
     background_size = size,
-  }, opts.button_opts)
+  }, opts.button_opts))
 
   if opts.pick then
     button.pick = opts.pick
