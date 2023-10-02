@@ -89,7 +89,7 @@ function init(self)
   self.go = msg.url("character")
   self.sprite = msg.url("character#sprite")
 
-  self.bubble_root_go = msg.url("bubble_root")
+  self.follow_char_z = msg.url("follow_char_z")
   self.bubble_go = msg.url("bubble")
   self.bubble_sprite = msg.url("bubble#sprite")
   self.bubble_label = msg.url("bubble#label")
@@ -113,8 +113,8 @@ function init(self)
   self.player_indicator_sprite = msg.url("player_indicator#sprite")
   self.player_indicator_label = msg.url("player_indicator#label")
 
-  self.fx_like = msg.url("#fx_like")
-  self.fx_dislike = msg.url("#fx_dislike")
+  self.fx_like = msg.url("fx#fx_like")
+  self.fx_dislike = msg.url("fx#fx_dislike")
 
   self.string_id = ""
 
@@ -353,7 +353,7 @@ function update(self, dt)
 
   local char_z = util.remap_value(self.position.y, 0.0, 1080, 0.2, -0.2)
   go.set(self.go, h_positionz, char_z)
-  go.set(self.bubble_root_go, h_positionz, char_z)
+  go.set(self.follow_char_z, h_positionz, char_z)
 
   self.speed = speed
 end

@@ -19,78 +19,19 @@ instances {
     z: 1.0
   }
 }
-instances {
-  id: "speech_mumbles"
-  prototype: "/screens/game/speech_mumbles.go"
-  position {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-  }
-  rotation {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
-  }
-  scale3 {
-    x: 1.0
-    y: 1.0
-    z: 1.0
-  }
-}
 scale_along_z: 0
 embedded_instances {
   id: "root"
-  children: "bubble_root"
   children: "character"
-  children: "expectation"
+  children: "follow_char_z"
   children: "like_source"
   children: "mumbles"
-  children: "player_indicator"
-  children: "popularity"
-  children: "shadow"
-  children: "speech_mumbles"
   data: "components {\n"
   "  id: \"script\"\n"
   "  component: \"/screens/game/character.script\"\n"
   "  position {\n"
   "    x: 0.0\n"
   "    y: 0.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "  property_decls {\n"
-  "  }\n"
-  "}\n"
-  "components {\n"
-  "  id: \"fx_like\"\n"
-  "  component: \"/screens/game/fx_like_received.particlefx\"\n"
-  "  position {\n"
-  "    x: 0.0\n"
-  "    y: 11.0\n"
-  "    z: -0.1\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "  property_decls {\n"
-  "  }\n"
-  "}\n"
-  "components {\n"
-  "  id: \"fx_dislike\"\n"
-  "  component: \"/screens/game/fx_dislike_received.particlefx\"\n"
-  "  position {\n"
-  "    x: -26.0\n"
-  "    y: 159.0\n"
   "    z: 0.0\n"
   "  }\n"
   "  rotation {\n"
@@ -169,200 +110,18 @@ embedded_instances {
   }
 }
 embedded_instances {
-  id: "bubble_root"
+  id: "follow_char_z"
   children: "bubble"
+  children: "expectation"
+  children: "fx"
+  children: "player_indicator"
+  children: "popularity"
+  children: "shadow"
   data: ""
   position {
     x: 0.0
     y: 0.0
     z: 0.0
-  }
-  rotation {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
-  }
-  scale3 {
-    x: 1.0
-    y: 1.0
-    z: 1.0
-  }
-}
-embedded_instances {
-  id: "popularity"
-  data: "embedded_components {\n"
-  "  id: \"fill\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"pixel_solid\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "size {\\n"
-  "  x: 100.0\\n"
-  "  y: 4.0\\n"
-  "  z: 0.0\\n"
-  "  w: 0.0\\n"
-  "}\\n"
-  "size_mode: SIZE_MODE_MANUAL\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.05\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "}\n"
-  "embedded_components {\n"
-  "  id: \"background\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"pixel_solid\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "size {\\n"
-  "  x: 120.0\\n"
-  "  y: 8.0\\n"
-  "  z: 0.0\\n"
-  "  w: 0.0\\n"
-  "}\\n"
-  "size_mode: SIZE_MODE_MANUAL\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "}\n"
-  "embedded_components {\n"
-  "  id: \"label\"\n"
-  "  type: \"label\"\n"
-  "  data: \"size {\\n"
-  "  x: 128.0\\n"
-  "  y: 32.0\\n"
-  "  z: 0.0\\n"
-  "  w: 0.0\\n"
-  "}\\n"
-  "color {\\n"
-  "  x: 1.0\\n"
-  "  y: 1.0\\n"
-  "  z: 1.0\\n"
-  "  w: 1.0\\n"
-  "}\\n"
-  "outline {\\n"
-  "  x: 0.0\\n"
-  "  y: 0.0\\n"
-  "  z: 0.0\\n"
-  "  w: 1.0\\n"
-  "}\\n"
-  "shadow {\\n"
-  "  x: 0.0\\n"
-  "  y: 0.0\\n"
-  "  z: 0.0\\n"
-  "  w: 1.0\\n"
-  "}\\n"
-  "leading: 1.0\\n"
-  "tracking: 0.0\\n"
-  "pivot: PIVOT_CENTER\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "line_break: false\\n"
-  "text: \\\"Popularity\\\"\\n"
-  "font: \\\"/main/fonts/MP_Bold.font\\\"\\n"
-  "material: \\\"/builtins/fonts/label-df.material\\\"\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 0.0\n"
-  "    y: -11.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "  scale {\n"
-  "    x: 0.5\n"
-  "    y: 0.5\n"
-  "    z: 1.0\n"
-  "  }\n"
-  "}\n"
-  ""
-  position {
-    x: 0.0
-    y: -13.0
-    z: 0.3
-  }
-  rotation {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
-  }
-  scale3 {
-    x: 1.0
-    y: 1.0
-    z: 1.0
-  }
-}
-embedded_instances {
-  id: "expectation"
-  data: "embedded_components {\n"
-  "  id: \"sprite\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
-  "default_animation: \\\"thought_bubble\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 14.0\n"
-  "    y: 47.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "}\n"
-  "embedded_components {\n"
-  "  id: \"icon\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
-  "default_animation: \\\"yes\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "\"\n"
-  "  position {\n"
-  "    x: 14.0\n"
-  "    y: 64.0\n"
-  "    z: 0.1\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "}\n"
-  ""
-  position {
-    x: -71.0
-    y: 160.0
-    z: 0.3
   }
   rotation {
     x: 0.0
@@ -536,6 +295,213 @@ embedded_instances {
   }
 }
 embedded_instances {
+  id: "like_source"
+  data: ""
+  position {
+    x: 77.0
+    y: 175.0
+    z: 0.0
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
+embedded_instances {
+  id: "expectation"
+  data: "embedded_components {\n"
+  "  id: \"icon\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
+  "default_animation: \\\"yes\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 14.0\n"
+  "    y: 64.0\n"
+  "    z: 0.01\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
+  "  id: \"sprite\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/game.atlas\\\"\\n"
+  "default_animation: \\\"thought_bubble\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 14.0\n"
+  "    y: 47.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+    x: -71.0
+    y: 160.0
+    z: 0.3
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
+embedded_instances {
+  id: "popularity"
+  data: "embedded_components {\n"
+  "  id: \"background\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
+  "default_animation: \\\"pixel_solid\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "size {\\n"
+  "  x: 120.0\\n"
+  "  y: 8.0\\n"
+  "  z: 0.0\\n"
+  "  w: 0.0\\n"
+  "}\\n"
+  "size_mode: SIZE_MODE_MANUAL\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
+  "  id: \"fill\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
+  "default_animation: \\\"pixel_solid\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "size {\\n"
+  "  x: 100.0\\n"
+  "  y: 4.0\\n"
+  "  z: 0.0\\n"
+  "  w: 0.0\\n"
+  "}\\n"
+  "size_mode: SIZE_MODE_MANUAL\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.01\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
+  "  id: \"label\"\n"
+  "  type: \"label\"\n"
+  "  data: \"size {\\n"
+  "  x: 128.0\\n"
+  "  y: 32.0\\n"
+  "  z: 0.0\\n"
+  "  w: 0.0\\n"
+  "}\\n"
+  "color {\\n"
+  "  x: 1.0\\n"
+  "  y: 1.0\\n"
+  "  z: 1.0\\n"
+  "  w: 1.0\\n"
+  "}\\n"
+  "outline {\\n"
+  "  x: 0.0\\n"
+  "  y: 0.0\\n"
+  "  z: 0.0\\n"
+  "  w: 1.0\\n"
+  "}\\n"
+  "shadow {\\n"
+  "  x: 0.0\\n"
+  "  y: 0.0\\n"
+  "  z: 0.0\\n"
+  "  w: 1.0\\n"
+  "}\\n"
+  "leading: 1.0\\n"
+  "tracking: 0.0\\n"
+  "pivot: PIVOT_CENTER\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "line_break: false\\n"
+  "text: \\\"Popularity\\\"\\n"
+  "font: \\\"/main/fonts/Kalam_Bold.font\\\"\\n"
+  "material: \\\"/builtins/fonts/label-df.material\\\"\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: -13.0\n"
+  "    z: -0.34\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "  scale {\n"
+  "    x: 0.5\n"
+  "    y: 0.5\n"
+  "    z: 1.0\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+    x: 0.0
+    y: -13.0
+    z: 0.35
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
+embedded_instances {
   id: "shadow"
   data: "embedded_components {\n"
   "  id: \"sprite\"\n"
@@ -576,19 +542,14 @@ embedded_instances {
   }
 }
 embedded_instances {
-  id: "player_indicator"
-  data: "embedded_components {\n"
-  "  id: \"sprite\"\n"
-  "  type: \"sprite\"\n"
-  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
-  "default_animation: \\\"ray_section\\\"\\n"
-  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
-  "blend_mode: BLEND_MODE_ALPHA\\n"
-  "\"\n"
+  id: "fx"
+  data: "components {\n"
+  "  id: \"fx_dislike\"\n"
+  "  component: \"/screens/game/fx_dislike_received.particlefx\"\n"
   "  position {\n"
-  "    x: 0.0\n"
-  "    y: -68.0\n"
-  "    z: 0.0\n"
+  "    x: -26.0\n"
+  "    y: 159.0\n"
+  "    z: 0.01\n"
   "  }\n"
   "  rotation {\n"
   "    x: 0.0\n"
@@ -596,13 +557,47 @@ embedded_instances {
   "    z: 0.0\n"
   "    w: 1.0\n"
   "  }\n"
-  "  scale {\n"
-  "    x: 0.1\n"
-  "    y: 0.1\n"
-  "    z: 1.0\n"
+  "  property_decls {\n"
   "  }\n"
   "}\n"
-  "embedded_components {\n"
+  "components {\n"
+  "  id: \"fx_like\"\n"
+  "  component: \"/screens/game/fx_like_received.particlefx\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: 11.0\n"
+  "    z: -0.01\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "  property_decls {\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
+embedded_instances {
+  id: "player_indicator"
+  data: "embedded_components {\n"
   "  id: \"label\"\n"
   "  type: \"label\"\n"
   "  data: \"size {\\n"
@@ -635,12 +630,12 @@ embedded_instances {
   "blend_mode: BLEND_MODE_ALPHA\\n"
   "line_break: false\\n"
   "text: \\\"YOU\\\"\\n"
-  "font: \\\"/main/fonts/MP_Bold.font\\\"\\n"
+  "font: \\\"/main/fonts/Kalam_Bold.font\\\"\\n"
   "material: \\\"/builtins/fonts/label-df.material\\\"\\n"
   "\"\n"
   "  position {\n"
   "    x: 0.0\n"
-  "    y: -20.0\n"
+  "    y: -29.0\n"
   "    z: 0.0\n"
   "  }\n"
   "  rotation {\n"
@@ -650,31 +645,36 @@ embedded_instances {
   "    w: 1.0\n"
   "  }\n"
   "}\n"
+  "embedded_components {\n"
+  "  id: \"sprite\"\n"
+  "  type: \"sprite\"\n"
+  "  data: \"tile_set: \\\"/screens/game/characters.atlas\\\"\\n"
+  "default_animation: \\\"ray_section\\\"\\n"
+  "material: \\\"/builtins/materials/sprite.material\\\"\\n"
+  "blend_mode: BLEND_MODE_ALPHA\\n"
+  "\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: -68.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "  scale {\n"
+  "    x: 0.1\n"
+  "    y: 0.1\n"
+  "    z: 1.0\n"
+  "  }\n"
+  "}\n"
   ""
   position {
     x: 0.0
     y: 278.0
-    z: 0.3
-  }
-  rotation {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 1.0
-  }
-  scale3 {
-    x: 1.0
-    y: 1.0
-    z: 1.0
-  }
-}
-embedded_instances {
-  id: "like_source"
-  data: ""
-  position {
-    x: 77.0
-    y: 175.0
-    z: 0.0
+    z: 0.03
   }
   rotation {
     x: 0.0
