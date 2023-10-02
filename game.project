@@ -11,7 +11,7 @@ height = 1080
 high_dpi = 1
 
 [project]
-title = crit-boilerplate
+title = Hangout Bandwidth
 version = 1.0.0
 custom_resources = _env/,intl/,data/
 dependencies#0 = https://github.com/britzl/deftest/archive/2.7.1.zip
