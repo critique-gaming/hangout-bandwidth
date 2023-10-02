@@ -1,0 +1,32 @@
+if not html5 then
+  return
+end
+
+-- Fallback for HTML5 because coroutines don't work well there
+local dispatcher = require "crit.dispatcher"
+local levels = require "lib.data.levels"
+local monarch = require "monarch.monarch"
+
+local h_advance_scene = hash("advance_scene")
+
+function init(self)
+  self.sub_id = dispatcher.subscribe({ h_advance_scene })
+  timer.delay(0, false, function ()
+    monarch.show("intro", { sequential = true })
+  end)
+end
+
+function final(self)
+  dispatcher.unsubscribe(self.sub_id)
+end
+
+function on_message(_, message_id, message)
+  if message_id == h_advance_scene then
+    print("Meow")
+    if message.popularity then
+      levels.current_level = (levels.current_level or 0) + 1
+      levels.player_start_popularity = message.popularity
+    end
+    monarch.show("game", { sequential = true })
+  end
+end

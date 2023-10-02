@@ -6,13 +6,17 @@ local levels = require "lib.data.levels"
 local h_advance_scene = hash("advance_scene")
 
 local function game()
+  if html5 then
+    return
+  end
+
   if not env.skip_intro then
     screens.replace("intro")()
     progression.wait_for_message(h_advance_scene)
   end
 
   local popularity = levels.player_start_popularity
-  function run_level(level)
+  local function run_level(level)
     levels.current_level = level
     levels.player_start_popularity = popularity
     screens.replace("game")()
