@@ -1,27 +1,7 @@
 script: "/screens/ui/convo_buttons.gui_script"
 fonts {
-  name: "system_font"
-  font: "/builtins/fonts/system_font.font"
-}
-fonts {
   name: "IndieFlower"
   font: "/main/fonts/IndieFlower.font"
-}
-fonts {
-  name: "Kalam_Light"
-  font: "/main/fonts/Kalam_Light.font"
-}
-fonts {
-  name: "MP_Italic"
-  font: "/main/fonts/MP_Bold.font"
-}
-fonts {
-  name: "MP_Light"
-  font: "/main/fonts/MP_Light.font"
-}
-fonts {
-  name: "MP_Regular"
-  font: "/main/fonts/MP_Regular.font"
 }
 textures {
   name: "game"
