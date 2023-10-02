@@ -18,6 +18,7 @@ local h_action_deny = hash("action_deny")
 local h_key_space = hash("key_space")
 local h_deny_button_show = hash("deny_button_show")
 local h_color_w = hash("color.w")
+local h_attempt_toggle_pause = hash("attempt_toggle_pause")
 
 local show
 
@@ -156,6 +157,12 @@ function init(self)
   gui.set_enabled(self.timer, false)
   gui.set_enabled(self.game_over, false)
 
+  self.pause_button = Button.new(self.timer, {
+    action = function ()
+      dispatcher.dispatch(h_attempt_toggle_pause)
+    end,
+  })
+
   msg.post(".", h_acquire_input_focus)
 end
 
@@ -274,6 +281,10 @@ function on_input(self, action_id, action)
   end
 
   if self.deny_button.on_input(action_id, action) then
+    return true
+  end
+
+  if self.pause_button.on_input(action_id, action) then
     return true
   end
 end
